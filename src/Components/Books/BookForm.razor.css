@@ -1,0 +1,10 @@
+::deep input,
+::deep select,
+::deep textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+::deep .validation-message {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}

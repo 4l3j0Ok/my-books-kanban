@@ -1,0 +1,18 @@
+<Project>
+
+  <!-- Compila Tailwind automáticamente antes de cada build de .NET.
+       Usa el binario standalone en tools/tailwindcss. -->
+  <PropertyGroup>
+    <TailwindConfig>$(MSBuildThisFileDirectory)..\tailwind.config.js</TailwindConfig>
+    <TailwindInput>$(MSBuildThisFileDirectory)wwwroot\app.src.css</TailwindInput>
+    <TailwindOutput>$(MSBuildThisFileDirectory)wwwroot\app.css</TailwindOutput>
+    <TailwindTool>$(MSBuildThisFileDirectory)..\tools\tailwindcss</TailwindTool>
+  </PropertyGroup>
+
+  <Target Name="CompileTailwind" BeforeTargets="Build;Compile;ResolveStaticWebAssetsInputs"
+          Condition="Exists('$(TailwindTool)')">
+    <Message Text="Compilando Tailwind → $(TailwindOutput)" Importance="high" />
+    <Exec Command="&quot;$(TailwindTool)&quot; -c &quot;$(TailwindConfig)&quot; -i &quot;$(TailwindInput)&quot; -o &quot;$(TailwindOutput)&quot; --minify" />
+  </Target>
+
+</Project>

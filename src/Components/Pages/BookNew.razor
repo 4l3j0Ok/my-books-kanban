@@ -1,0 +1,69 @@
+@page "/books/new"
+@inject IBookService BookService
+@inject ICategoryService CategoryService
+@inject ICoverStorageService CoverStorage
+@inject KanbanState State
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Nuevo libro · My Books Kanban</PageTitle>
+
+<section class="page">
+    <nav aria-label="breadcrumb" class="breadcrumb">
+        <a href="" class="breadcrumb-link">Tablero</a>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current" aria-current="page">Nuevo libro</span>
+    </nav>
+
+    <header class="page-header">
+        <p class="page-eyebrow">
+            <span class="page-eyebrow-rule" aria-hidden="true"></span>
+            <span>Alta</span>
+            <span class="page-eyebrow-rule" aria-hidden="true"></span>
+        </p>
+        <h1 class="page-title">Nuevo libro</h1>
+        <p class="page-lede">Captura los datos del libro. Puedes añadir la portada más tarde desde la página de detalle.</p>
+    </header>
+
+    <div class="page-body page-body-narrow">
+        <BookForm Model="model"
+                  Categories="categories"
+                  OnSubmit="HandleSubmit"
+                  OnCancel="Cancel" />
+    </div>
+</section>
+
+@code {
+    private BookFormModel model = new();
+    private List<CategoryListItem> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += OnStateChanged;
+        categories = (await CategoryService.ListAsync()).ToList();
+    }
+
+    private async Task HandleSubmit(BookFormModel m)
+    {
+        try
+        {
+            var id = await BookService.CreateAsync(m, default);
+            if (m.CoverFile is not null)
+            {
+                var path = await CoverStorage.SaveAsync(m.CoverFile, null);
+                if (path is not null) await BookService.UpdateCoverAsync(id, path);
+            }
+            State.NotifySuccess("Libro creado correctamente.");
+            Nav.NavigateTo($"books/{id}");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private void Cancel() => Nav.NavigateTo("");
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => State.Changed -= OnStateChanged;
+}

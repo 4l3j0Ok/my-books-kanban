@@ -1,0 +1,18 @@
+@* Estado vacío reutilizable con diseño de estante. *@
+
+<div class="rounded-sm border border-dashed border-[var(--shelf)]/30 p-6 text-center" role="status">
+    <div class="font-display text-3xl leading-none" aria-hidden="true">@Icon</div>
+    <h3 class="m-0 mt-2 font-display text-base font-semibold tracking-tight text-[var(--ink)]">@Title</h3>
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <p class="m-0 mt-1 font-body text-sm leading-relaxed text-[var(--muted)]">@Description</p>
+    }
+    <div class="mt-4">@ChildContent</div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Sin datos";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string Icon { get; set; } = "📭";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

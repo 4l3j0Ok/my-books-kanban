@@ -1,0 +1,225 @@
+/* Ficha de catálogo: el detalle se estiliza con Tailwind + tokens del proyecto. */
+
+::deep .catalogue {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: var(--surface);
+}
+
+::deep .catalogue-empty {
+  padding: 2.5rem 1.5rem;
+}
+
+::deep .catalogue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+::deep .catalogue-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+::deep .catalogue-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+::deep .catalogue-close:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+
+::deep .catalogue-title-block {
+  padding: 0 1.25rem 0.75rem;
+}
+
+::deep .catalogue-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+::deep .catalogue-byline {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
+::deep .catalogue-byline span {
+  color: var(--ink);
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Doble regla editorial bajo el título */
+::deep .catalogue-rule {
+  position: relative;
+  height: 5px;
+  margin: 0 1.25rem 0.5rem;
+}
+
+::deep .catalogue-rule::before,
+::deep .catalogue-rule::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--brass);
+}
+
+::deep .catalogue-rule::before { top: 1px; }
+::deep .catalogue-rule::after  { top: 4px; background: color-mix(in srgb, var(--ink) 40%, transparent); }
+
+::deep .catalogue-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+::deep .catalogue-cover {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0.4rem 0;
+}
+
+::deep .catalogue-cover img {
+  max-width: 12rem;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+  box-shadow:
+    0 1px 2px rgba(44, 36, 22, 0.18),
+    0 6px 16px -4px rgba(44, 36, 22, 0.22);
+}
+
+::deep .catalogue-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 9rem;
+  aspect-ratio: 2 / 3;
+  font-size: 2.5rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px dashed color-mix(in srgb, var(--shelf) 60%, transparent);
+  border-radius: 2px;
+}
+
+/* Campos tipo "tabla de catálogo" */
+::deep .catalogue-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+::deep .catalogue-field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--shelf) 50%, transparent);
+}
+
+::deep .catalogue-field:last-child { border-bottom: 0; }
+
+::deep .catalogue-field dt {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+::deep .catalogue-field dd {
+  margin: 0;
+  text-align: right;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+::deep .catalogue-rating {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: var(--brass);
+}
+
+/* Barra de progreso fina */
+::deep .catalogue-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 8rem;
+}
+
+::deep .catalogue-progress-track {
+  display: block;
+  width: 8rem;
+  height: 4px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+::deep .catalogue-progress-bar {
+  display: block;
+  height: 100%;
+  background: var(--brass);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+::deep .catalogue-progress-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* Acciones */
+::deep .catalogue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+}
+
+::deep .catalogue-edit {
+  width: 100%;
+}
+
+/* Botones: sistema compartido, definido en app.src.css. */

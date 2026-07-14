@@ -1,0 +1,17 @@
+@page "/not-found"
+@inject NavigationManager Nav
+
+<PageTitle>No encontrado · My Books Kanban</PageTitle>
+
+<section class="mx-auto w-full max-w-2xl px-4 py-16 text-center">
+    <h1 class="font-display text-6xl font-semibold tracking-tight text-[var(--ink)]">404</h1>
+    <p class="mt-2 font-body text-base text-[var(--muted)]">La página que buscas no existe.</p>
+    <a class="mt-5 inline-flex items-center justify-center rounded-sm bg-[var(--brass)] px-4 py-2 font-body text-sm font-semibold text-white hover:bg-[var(--brass-strong)]" href="">Volver al tablero</a>
+</section>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo("/not-found");
+    }
+}

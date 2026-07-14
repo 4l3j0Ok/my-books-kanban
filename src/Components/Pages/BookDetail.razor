@@ -1,0 +1,87 @@
+@page "/books/{Id:int}"
+@inject IBookService BookService
+@inject ICategoryService CategoryService
+@inject ICoverStorageService CoverStorage
+@inject KanbanState State
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Detalle · My Books Kanban</PageTitle>
+
+<section class="page">
+    <nav aria-label="breadcrumb" class="breadcrumb">
+        <a href="" class="breadcrumb-link">Tablero</a>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current" aria-current="page">Detalle</span>
+    </nav>
+
+    <div class="page-body page-body-narrow">
+        @if (book is null)
+        {
+            <EmptyState Title="Libro no encontrado"
+                        Description="El libro que buscas no existe o fue eliminado."
+                        Icon="🔍">
+                <a class="btn btn-primary" href="">Volver al tablero</a>
+            </EmptyState>
+        }
+        else
+        {
+            <div class="catalogue-frame">
+                <BookCoverDetail Book="book"
+                                 FormModel="form"
+                                 Categories="categories"
+                                 OnClose="ClosePage"
+                                 OnDelete="ConfirmDelete"
+                                 OnSave="Save" />
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private BookSummary? book;
+    private BookFormModel? form;
+    private List<CategoryListItem> categories = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        State.Changed += OnStateChanged;
+        categories = (await CategoryService.ListAsync()).ToList();
+        book = await BookService.GetSummaryAsync(Id);
+        form = book is null ? null : await BookService.GetForEditAsync(Id);
+    }
+
+    private async Task Save(BookFormModel model)
+    {
+        try
+        {
+            if (model.CoverFile is not null)
+            {
+                var previous = model.CoverPath;
+                var path = await CoverStorage.SaveAsync(model.CoverFile, previous);
+                if (path is not null) model.CoverPath = path;
+            }
+            await BookService.UpdateAsync(model);
+            State.NotifySuccess("Cambios guardados.");
+            book = await BookService.GetSummaryAsync(Id);
+            form = await BookService.GetForEditAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private void ConfirmDelete(int id)
+    {
+        State.NotifyInfo($"Para confirmar el borrado, use la opción de la página de edición (Id={id}).");
+        Nav.NavigateTo($"books/{id}/edit");
+    }
+
+    private void ClosePage() => Nav.NavigateTo("");
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => State.Changed -= OnStateChanged;
+}

@@ -1,0 +1,155 @@
+@page "/"
+@inject IBookService BookService
+@inject ICategoryService CategoryService
+@inject KanbanState State
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Tablero · My Books Kanban</PageTitle>
+
+<section class="library" aria-label="Tu biblioteca">
+    <header class="library-header">
+        <p class="library-eyebrow">
+            <span class="library-eyebrow-rule" aria-hidden="true"></span>
+            <span>Tu biblioteca</span>
+            <span class="library-eyebrow-rule" aria-hidden="true"></span>
+        </p>
+        <h1 class="library-title">El tablero, de un vistazo</h1>
+        <p class="library-stats">
+            <span><strong>@TotalBooks</strong> libros</span>
+            <span class="library-stats-dot" aria-hidden="true">·</span>
+            <span>arrastra un lomo entre estantes para reubicarlo</span>
+        </p>
+    </header>
+
+    <SearchAndFilters class="library-index"
+                      Term="@State.SearchTerm"
+                      CategoryId="@State.CategoryId"
+                      Status="@State.Status"
+                      Categories="categories"
+                      OnApply="ApplyFilters"
+                      OnClear="ClearFilters" />
+
+    @if (State.IsLoading)
+    {
+        <p class="library-loading" aria-live="polite">Cargando tablero…</p>
+    }
+
+    <KanbanBoard Board="board"
+                 OnOpenBook="OpenBook"
+                 OnDropBook="DropBook" />
+</section>
+
+<div class="drawer @DrawerClass" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="@(SelectedBook is null)">
+    <div class="drawer-backdrop" @onclick="CloseBook"></div>
+    <div class="drawer-panel">
+        <div class="drawer-handle" aria-hidden="true"></div>
+        <BookCoverDetail Book="SelectedBook"
+                         FormModel="FormModel"
+                         Categories="categories"
+                         OnClose="CloseBook"
+                         OnDelete="ConfirmDelete"
+                         OnSave="SaveBook" />
+    </div>
+</div>
+
+@code {
+    private BoardViewModel board = new();
+    private List<CategoryListItem> categories = new();
+    private BookSummary? SelectedBook;
+    private BookFormModel? FormModel;
+
+    private string DrawerClass => SelectedBook is null ? "is-closed" : "is-open";
+
+    private int TotalBooks => board.Columns.Values.Sum(c => c.Count);
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += OnStateChanged;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        State.SetLoading(true);
+        try
+        {
+            categories = (await CategoryService.ListAsync()).ToList();
+            board = await BookService.GetBoardAsync();
+        }
+        finally
+        {
+            State.SetLoading(false);
+        }
+    }
+
+    private async Task ApplyFilters(SearchAndFilters.FilterPayload payload)
+    {
+        State.SetSearch(payload.Term);
+        State.SetCategory(payload.CategoryId);
+        State.SetStatus(payload.Status);
+        await ReloadAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        State.ClearFilters();
+        await ReloadAsync();
+    }
+
+    private async Task OpenBook(int id)
+    {
+        State.OpenBook(id);
+        SelectedBook = await BookService.GetSummaryAsync(id);
+        FormModel = SelectedBook is null
+            ? null
+            : await BookService.GetForEditAsync(id);
+    }
+
+    private void CloseBook()
+    {
+        SelectedBook = null;
+        FormModel = null;
+        State.CloseBook();
+    }
+
+    private async Task SaveBook(BookFormModel model)
+    {
+        try
+        {
+            var bookId = model.Id ?? 0;
+            if (bookId == 0) bookId = await BookService.CreateAsync(model);
+            else await BookService.UpdateAsync(model);
+
+            State.NotifySuccess("Libro guardado.");
+            await ReloadAsync();
+            SelectedBook = await BookService.GetSummaryAsync(bookId);
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private void ConfirmDelete(int id)
+    {
+        State.NotifyInfo($"Confirmación de borrado del libro {id} aún no implementada en Home; use la página de detalle.");
+    }
+
+    private async Task DropBook((int BookId, ReadingStatus Target, int TargetIndex) args)
+    {
+        try
+        {
+            await BookService.MoveAsync(args.BookId, args.Target, args.TargetIndex);
+            await ReloadAsync();
+            State.NotifySuccess("Libro reubicado.");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => State.Changed -= OnStateChanged;
+}

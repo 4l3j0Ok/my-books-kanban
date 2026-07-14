@@ -1,0 +1,62 @@
+@* Paginación accesible. *@
+
+<nav class="flex flex-wrap items-center gap-3" aria-label="Paginación de resultados">
+    <ul class="m-0 flex list-none items-center gap-1 p-0">
+        <li>
+            <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 bg-[var(--surface)] px-2.5 py-1 font-mono text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
+                    @onclick="() => GoTo(1)" disabled="@(CurrentPage <= 1)" aria-label="Primera página">◀◀</button>
+        </li>
+        <li>
+            <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 bg-[var(--surface)] px-2.5 py-1 font-mono text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
+                    @onclick="() => GoTo(CurrentPage - 1)" disabled="@(CurrentPage <= 1)" aria-label="Página anterior">◀</button>
+        </li>
+        @foreach (var p in VisiblePages)
+        {
+            <li>
+                <button type="button" class="@PageBtnClass(p == CurrentPage)"
+                        @onclick="() => GoTo(p)" aria-current="@(p == CurrentPage ? "page" : null)">@p</button>
+            </li>
+        }
+        <li>
+            <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 bg-[var(--surface)] px-2.5 py-1 font-mono text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
+                    @onclick="() => GoTo(CurrentPage + 1)" disabled="@(CurrentPage >= TotalPages)" aria-label="Página siguiente">▶</button>
+        </li>
+        <li>
+            <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 bg-[var(--surface)] px-2.5 py-1 font-mono text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
+                    @onclick="() => GoTo(TotalPages)" disabled="@(CurrentPage >= TotalPages)" aria-label="Última página">▶▶</button>
+        </li>
+    </ul>
+    <span class="font-mono text-2xs text-[var(--muted)]" aria-live="polite">
+        Página @CurrentPage de @TotalPages (@TotalItems resultados)
+    </span>
+</nav>
+
+@code {
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public int TotalItems { get; set; } = 0;
+
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+
+    private IEnumerable<int> VisiblePages
+    {
+        get
+        {
+            if (TotalPages <= 7) return Enumerable.Range(1, Math.Max(1, TotalPages));
+            var start = Math.Max(1, CurrentPage - 2);
+            var end = Math.Min(TotalPages, start + 4);
+            start = Math.Max(1, end - 4);
+            return Enumerable.Range(start, end - start + 1);
+        }
+    }
+
+    private static string PageBtnClass(bool active) => active
+        ? "inline-flex items-center justify-center rounded-sm border border-[var(--brass)] bg-[var(--brass)] px-2.5 py-1 font-mono text-xs font-semibold text-white"
+        : "inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 bg-[var(--surface)] px-2.5 py-1 font-mono text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]";
+
+    private async Task GoTo(int p)
+    {
+        if (p < 1 || p > TotalPages || p == CurrentPage) return;
+        await OnPageChanged.InvokeAsync(p);
+    }
+}

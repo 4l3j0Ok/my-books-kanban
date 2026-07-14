@@ -1,0 +1,127 @@
+@* Panel de detalle con apariencia de ficha de catálogo. *@
+
+<article class="catalogue" role="complementary" aria-label="Detalle del libro"
+         id="@($"book-detail-{Book?.Id}")">
+    @if (Book is null)
+    {
+        <div class="catalogue-empty">
+            <EmptyState Title="Selecciona un libro"
+                        Description="Haz clic en un lomo del tablero para ver su detalle."
+                        Icon="🔍" />
+        </div>
+    }
+    else
+    {
+        <header class="catalogue-header">
+            <span class="catalogue-eyebrow">Ficha de catálogo</span>
+            <button type="button" class="catalogue-close"
+                    aria-label="Cerrar detalle" @onclick="() => OnClose.InvokeAsync()">✕</button>
+        </header>
+
+        <div class="catalogue-title-block">
+            <h2 id="drawer-title" class="catalogue-title">@Book.Title</h2>
+            <p class="catalogue-byline">de <span>@Book.Author</span></p>
+        </div>
+
+        <div class="catalogue-rule" aria-hidden="true"></div>
+
+        <div class="catalogue-body">
+            <figure class="catalogue-cover">
+                @if (!string.IsNullOrEmpty(Book.CoverPath))
+                {
+                    <img src="@Book.CoverPath" alt="@($"Portada de {Book.Title}")" />
+                }
+                else
+                {
+                    <div class="catalogue-cover-placeholder" aria-hidden="true">📕</div>
+                }
+            </figure>
+
+            @if (Editing)
+            {
+                <div class="catalogue-edit">
+                    <BookForm Model="FormModel!"
+                              Categories="Categories"
+                              OnSubmit="HandleSave"
+                              OnCancel="() => Editing = false" />
+                </div>
+            }
+            else
+            {
+                <dl class="catalogue-fields">
+                    <div class="catalogue-field">
+                        <dt>Categoría</dt>
+                        <dd>@Book.CategoryName</dd>
+                    </div>
+                    <div class="catalogue-field">
+                        <dt>Estado</dt>
+                        <dd>@StatusLabel(Book.Status)</dd>
+                    </div>
+                    @if (Book.PageCount is { } pages)
+                    {
+                        <div class="catalogue-field">
+                            <dt>Progreso</dt>
+                            <dd class="catalogue-progress">
+                                <span class="catalogue-progress-track" aria-hidden="true">
+                                    <span class="catalogue-progress-bar" style="width:@ProgressPct(pages)%"></span>
+                                </span>
+                                <span class="catalogue-progress-num">@(Book.CurrentPage ?? 0) / @pages</span>
+                            </dd>
+                        </div>
+                    }
+                    @if (Book.Rating is { } rating)
+                    {
+                        <div class="catalogue-field">
+                            <dt>Calificación</dt>
+                            <dd class="catalogue-rating">
+                                @for (var i = 0; i < 5; i++)
+                                {
+                                    <span aria-hidden="true">@(i < rating ? "★" : "☆")</span>
+                                }
+                            </dd>
+                        </div>
+                    }
+                </dl>
+
+                <div class="catalogue-actions">
+                    <button class="btn btn-primary" type="button" @onclick="() => Editing = true">Editar</button>
+                    <button class="btn btn-danger" type="button" @onclick="() => OnDelete.InvokeAsync(Book.Id)">Eliminar</button>
+                    <button class="btn btn-ghost" type="button" @onclick="() => OnClose.InvokeAsync()">Cerrar</button>
+                </div>
+            }
+        </div>
+    }
+</article>
+
+@code {
+    [Parameter] public BookSummary? Book { get; set; }
+    [Parameter] public BookFormModel? FormModel { get; set; }
+    [Parameter] public IReadOnlyList<CategoryListItem> Categories { get; set; } = Array.Empty<CategoryListItem>();
+
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+    [Parameter] public EventCallback<BookFormModel> OnSave { get; set; }
+
+    private bool Editing { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Book is not null) Editing = false;
+    }
+
+    private Task HandleSave(BookFormModel model) => OnSave.InvokeAsync(model);
+
+    private int ProgressPct(int total)
+    {
+        if (Book?.CurrentPage is not { } current || total <= 0) return 0;
+        return Math.Clamp((int)Math.Round(100.0 * current / total), 0, 100);
+    }
+
+    private static string StatusLabel(ReadingStatus s) => s switch
+    {
+        ReadingStatus.ToRead => "Por leer",
+        ReadingStatus.Reading => "Leyendo",
+        ReadingStatus.Read => "Leído",
+        _ => s.ToString()
+    };
+}

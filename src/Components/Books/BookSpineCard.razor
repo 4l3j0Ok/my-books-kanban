@@ -1,0 +1,74 @@
+@{
+    var colorVar = GetCategoryColor(Book.CategoryName);
+    var spineWidth = GetSpineWidth(Book.PageCount);
+    var stateClass = IsDragging ? "is-dragging" : null;
+}
+
+<article class="@($"spine-card {stateClass}") flex items-stretch overflow-hidden rounded-sm cursor-grab select-none"
+         style="--spine-accent: @colorVar;"
+         role="listitem"
+         tabindex="0"
+         data-book-id="@Book.Id"
+         draggable="true"
+         @onclick="HandleClick"
+         @onkeydown="HandleKey"
+         @ondragstart="HandleDragStart"
+         @ondragend="HandleDragEnd">
+    <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5 border-l-[3px] border-black/20 bg-[--spine-accent] px-3 py-2 text-left text-white">
+        <span class="truncate font-display text-sm font-semibold leading-tight tracking-tight" title="@Book.Title">@Book.Title</span>
+        <span class="truncate font-body text-2xs leading-snug opacity-80" title="@Book.Author">@Book.Author</span>
+        @if (Book.Rating is { } rating)
+        {
+            <span class="font-mono text-2xs tracking-wider opacity-70" aria-label="@($"Calificación {rating} de 5")">
+                @for (var i = 0; i < 5; i++)
+                {
+                    <span aria-hidden="true">@(i < rating ? "★" : "☆")</span>
+                }
+            </span>
+        }
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public BookSummary Book { get; set; } = default!;
+
+    [Parameter] public bool IsDragging { get; set; }
+
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<int> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+
+    private Task HandleClick() => OnOpen.InvokeAsync(Book.Id);
+
+    private Task HandleKey(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            return OnOpen.InvokeAsync(Book.Id);
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDragStart(DragEventArgs e) => OnDragStart.InvokeAsync(Book.Id);
+    private Task HandleDragEnd(DragEventArgs e) => OnDragEnd.InvokeAsync();
+
+    private static string GetCategoryColor(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "#8a7050";
+        var hash = 0;
+        foreach (var ch in name) hash = (hash * 31 + ch) & 0xFFFFFF;
+        var hue = hash % 360;
+        return $"hsl({hue}, 38%, 42%)";
+    }
+
+    private static int GetSpineWidth(int? pageCount)
+    {
+        return pageCount switch
+        {
+            <= 150 => 0,
+            <= 300 => 1,
+            <= 500 => 2,
+            _ => 3
+        };
+    }
+}

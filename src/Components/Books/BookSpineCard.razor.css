@@ -1,0 +1,28 @@
+/* ::deep needed because Blazor scopes component styles */
+::deep .spine-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, opacity 0.2s ease-out;
+  box-shadow: 0 1px 3px rgba(44, 36, 22, 0.08);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  ::deep .spine-card:hover {
+    transform: translateY(-3px) rotate(0.8deg);
+    box-shadow: 0 8px 20px rgba(44, 36, 22, 0.15);
+  }
+}
+
+::deep .spine-card:focus {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+::deep .spine-card:active {
+  cursor: grabbing;
+}
+
+::deep .spine-card.is-dragging {
+  opacity: 0.35;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 14px 28px rgba(44, 36, 22, 0.25);
+  cursor: grabbing;
+}

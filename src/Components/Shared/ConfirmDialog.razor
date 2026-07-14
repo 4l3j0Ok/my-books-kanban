@@ -1,0 +1,50 @@
+@* Modal de confirmación accesible. *@
+@implements IDisposable
+
+@if (Visible)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="mbk-confirm-title">
+        <div class="absolute inset-0 bg-black/40" @onclick="Cancel"></div>
+        <div class="relative w-[calc(100%-2rem)] max-w-sm rounded-sm bg-[var(--surface)] p-5 shadow-lg">
+            <h2 id="mbk-confirm-title" class="mb-2 font-display text-lg font-semibold tracking-tight text-[var(--ink)]">@Title</h2>
+            <p class="mb-5 font-body text-sm leading-relaxed text-[var(--muted)]">@Message</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 px-3 py-1.5 font-body text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]" @onclick="Cancel">@CancelText</button>
+                <button type="button" class="inline-flex items-center justify-center rounded-sm bg-[var(--danger)] px-3 py-1.5 font-body text-xs font-semibold text-white hover:opacity-90" @onclick="Confirm">@ConfirmText</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private KanbanState State { get; set; } = default!;
+
+    private bool Visible { get; set; }
+    private string Title { get; set; } = "¿Confirmas la acción?";
+    private string Message { get; set; } = string.Empty;
+    private string ConfirmText { get; set; } = "Confirmar";
+    private string CancelText { get; set; } = "Cancelar";
+    private Func<Task>? OnConfirm { get; set; }
+
+    public void Show(string title, string message, string confirmText, string cancelText, Func<Task> onConfirm)
+    {
+        Title = title; Message = message;
+        ConfirmText = confirmText; CancelText = cancelText;
+        OnConfirm = onConfirm;
+        Visible = true;
+        StateHasChanged();
+    }
+
+    private async Task Confirm()
+    {
+        Visible = false;
+        var cb = OnConfirm;
+        OnConfirm = null;
+        if (cb is not null) await cb();
+        StateHasChanged();
+    }
+
+    private void Cancel() { Visible = false; OnConfirm = null; StateHasChanged(); }
+
+    public void Dispose() { /* no-op */ }
+}

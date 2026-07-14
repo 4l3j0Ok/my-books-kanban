@@ -1,0 +1,144 @@
+@* Formulario de alta/edición. *@
+
+<EditForm Model="Model" OnValidSubmit="HandleSubmit" novalidate>
+    <DataAnnotationsValidator />
+    <ValidationSummary class="mb-3 rounded-sm border border-[var(--danger)]/50 bg-[var(--danger)]/5 p-3 font-body text-xs text-[var(--danger)]" role="alert" />
+
+    @if (BusinessErrors.Count > 0)
+    {
+        <div class="mb-3 rounded-sm border border-[var(--danger)]/50 bg-[var(--danger)]/5 p-3 font-body text-xs text-[var(--danger)]" role="alert" aria-live="polite">
+            <ul class="m-0 list-inside list-disc ps-3">
+                @foreach (var err in BusinessErrors) { <li>@err</li> }
+            </ul>
+        </div>
+    }
+
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div>
+            <label for="bk-title" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Título</label>
+            <InputText id="bk-title" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.Title" />
+            <ValidationMessage For="() => Model.Title" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-author" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Autor</label>
+            <InputText id="bk-author" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.Author" />
+            <ValidationMessage For="() => Model.Author" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-category" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Categoría</label>
+            <InputSelect id="bk-category" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.CategoryId">
+                <option value="0">— Selecciona —</option>
+                @foreach (var c in Categories)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Model.CategoryId" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-status" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Estado de lectura</label>
+            <InputSelect id="bk-status" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.ReadingStatus">
+                <option value="@ReadingStatus.ToRead">Por leer</option>
+                <option value="@ReadingStatus.Reading">Leyendo</option>
+                <option value="@ReadingStatus.Read">Leído</option>
+            </InputSelect>
+            <ValidationMessage For="() => Model.ReadingStatus" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-pages" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Total de páginas</label>
+            <InputNumber id="bk-pages" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.PageCount" />
+            <ValidationMessage For="() => Model.PageCount" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-current" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Página actual</label>
+            <InputNumber id="bk-current" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.CurrentPage" />
+            <ValidationMessage For="() => Model.CurrentPage" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-rating" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Calificación (1-5)</label>
+            <InputSelect id="bk-rating" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="RatingProxy">
+                <option value="">Sin calificar</option>
+                @for (var i = 1; i <= 5; i++) { <option value="@i">@i ★</option> }
+            </InputSelect>
+            <ValidationMessage For="() => Model.Rating" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-isbn" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">ISBN</label>
+            <InputText id="bk-isbn" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.Isbn" />
+            <ValidationMessage For="() => Model.Isbn" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div>
+            <label for="bk-started" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Inicio</label>
+            <InputDate id="bk-started" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.StartedAt" />
+        </div>
+        <div>
+            <label for="bk-finished" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Fin</label>
+            <InputDate id="bk-finished" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.FinishedAt" />
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="bk-description" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Descripción</label>
+            <InputTextArea id="bk-description" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" rows="3" @bind-Value="Model.Description" />
+            <ValidationMessage For="() => Model.Description" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="bk-cover" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Portada (opcional)</label>
+            <InputFile id="bk-cover" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-transparent px-3 py-2 font-body text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-[var(--brass)] file:px-3 file:py-1 file:font-body file:text-xs file:font-semibold file:text-white" OnChange="HandleCoverSelected" accept="image/png,image/jpeg,image/webp" />
+            @if (!string.IsNullOrEmpty(Model.CoverPath))
+            {
+                <small class="mt-1 block font-mono text-2xs text-[var(--muted)]">Portada actual: @Model.CoverPath</small>
+            }
+        </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <button type="submit" class="inline-flex items-center justify-center rounded-sm bg-[var(--brass)] px-4 py-2 font-body text-sm font-semibold text-white hover:bg-[var(--brass-strong)]">Guardar</button>
+        <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 px-4 py-2 font-body text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]" @onclick="() => OnCancel.InvokeAsync()">Cancelar</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired] public BookFormModel Model { get; set; } = new();
+    [Parameter] public IReadOnlyList<CategoryListItem> Categories { get; set; } = Array.Empty<CategoryListItem>();
+
+    [Parameter] public EventCallback<BookFormModel> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private List<string> BusinessErrors { get; } = new();
+
+    private string? RatingProxy
+    {
+        get => Model.Rating?.ToString() ?? string.Empty;
+        set
+        {
+            if (string.IsNullOrEmpty(value)) Model.Rating = null;
+            else if (int.TryParse(value, out var v)) Model.Rating = v;
+        }
+    }
+
+    private void HandleCoverSelected(InputFileChangeEventArgs e)
+    {
+        Model.CoverFile = e.File;
+    }
+
+    private async Task HandleSubmit()
+    {
+        BusinessErrors.Clear();
+        var errors = MyBooksKanban.Application.Validators.BookFormValidator.ValidateBusinessRules(Model);
+        if (errors.Count > 0)
+        {
+            BusinessErrors.AddRange(errors);
+            return;
+        }
+        await OnSubmit.InvokeAsync(Model);
+    }
+}

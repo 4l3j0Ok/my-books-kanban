@@ -1,0 +1,63 @@
+@* Orquesta las tres columnas con apariencia de estantería. *@
+
+<div class="board" role="group" aria-label="Tablero Kanban de libros">
+    <ol class="board-columns">
+        @foreach (var status in BoardViewModel.AllStatuses)
+        {
+            var books = Board.Columns.TryGetValue(status, out var list) ? list : Array.Empty<BookSummary>();
+            <li class="board-column-slot">
+                <KanbanColumn Title="@TitleFor(status)"
+                              Status="status"
+                              Index="@ColumnIndex(status)"
+                              Books="books"
+                              DraggingBookId="@_draggingBookId"
+                              OnOpen="HandleOpen"
+                              OnDragStart="HandleDragStart"
+                              OnDragEnd="HandleDragEnd"
+                              OnDropBook="HandleDrop" />
+            </li>
+        }
+    </ol>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public BoardViewModel Board { get; set; } = new();
+
+    [Parameter] public EventCallback<int> OnOpenBook { get; set; }
+    [Parameter] public EventCallback<(int BookId, ReadingStatus Target, int TargetIndex)> OnDropBook { get; set; }
+
+    private int? _draggingBookId;
+
+    private static string ColumnIndex(ReadingStatus status) => status switch
+    {
+        ReadingStatus.ToRead  => "01",
+        ReadingStatus.Reading => "02",
+        ReadingStatus.Read    => "03",
+        _ => "00"
+    };
+
+    private static string TitleFor(ReadingStatus status) => status switch
+    {
+        ReadingStatus.ToRead => "Por leer",
+        ReadingStatus.Reading => "Leyendo",
+        ReadingStatus.Read => "Leídos",
+        _ => status.ToString()
+    };
+
+    private Task HandleOpen(int id) => OnOpenBook.InvokeAsync(id);
+
+    private Task HandleDragStart(int id)
+    {
+        _draggingBookId = id;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDragEnd()
+    {
+        _draggingBookId = null;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDrop((int BookId, ReadingStatus TargetStatus, int TargetIndex) args) =>
+        OnDropBook.InvokeAsync(args);
+}

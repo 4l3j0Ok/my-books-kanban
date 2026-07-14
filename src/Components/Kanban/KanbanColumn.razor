@@ -1,0 +1,193 @@
+@* Columna del Kanban con apariencia de estante. Sirve como zona de drop. *@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<article class="column @ColumnClass"
+         aria-labelledby="@($"col-title-{Status}")">
+    <header class="column-header">
+        <span class="column-index" aria-hidden="true">@Index</span>
+        <div class="column-title-block">
+            <h2 id="@($"col-title-{Status}")" class="column-title">@Title</h2>
+            <p class="column-meta">@MetaFor(Status)</p>
+        </div>
+        <span class="column-count"
+              aria-label="@($"{Books?.Count ?? 0} libros en {Title}")">
+            @Books?.Count
+        </span>
+    </header>
+
+    <div @ref="_dropZoneRef"
+         class="column-shelf @DropZoneClass"
+         role="list"
+         @ondragenter="HandleDragEnter"
+         @ondragleave="HandleDragLeave"
+         @ondragover="HandleDragOver"
+         @ondragover:preventDefault
+         @ondrop="HandleDrop"
+         @ondrop:preventDefault>
+        @if (Books is null || Books.Count == 0)
+        {
+            <EmptyState Title="Estante vacío"
+                        Description="@EmptyDescription"
+                        Icon="📭" />
+        }
+        else
+        {
+            @for (var i = 0; i < Books.Count; i++)
+            {
+                @if (ShowSlotAt(i))
+                {
+                    <div class="drop-slot" aria-hidden="true"></div>
+                }
+                <BookSpineCard Book="Books[i]"
+                               IsDragging="@(Books[i].Id == DraggingBookId)"
+                               OnOpen="HandleOpen"
+                               OnDragStart="HandleCardDragStart"
+                               OnDragEnd="HandleCardDragEnd" />
+            }
+            @if (ShowSlotAt(Books.Count))
+            {
+                <div class="drop-slot" aria-hidden="true"></div>
+            }
+        }
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Index { get; set; } = "00";
+    [Parameter, EditorRequired] public ReadingStatus Status { get; set; }
+    [Parameter] public IReadOnlyList<BookSummary>? Books { get; set; }
+
+    [Parameter] public int? DraggingBookId { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<int> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    [Parameter] public EventCallback<(int BookId, ReadingStatus TargetStatus, int TargetIndex)> OnDropBook { get; set; }
+
+    private ElementReference _dropZoneRef;
+    private IJSObjectReference? _jsModule;
+    private int? _hoverIndex;
+    private bool _isOver;
+    private int _dragDepth;
+    private DateTime _lastIndexCompute = DateTime.MinValue;
+    private const int IndexThrottleMs = 80;
+
+    private bool IsActive => DraggingBookId is not null && _isOver;
+    private bool IsDragging => DraggingBookId is not null;
+
+    private string ColumnClass => IsActive ? "is-drop-active" : string.Empty;
+    private string DropZoneClass => IsActive ? "is-drop-active" : string.Empty;
+
+    private string EmptyDescription => IsDragging
+        ? "Suelta el libro aquí para añadirlo a este estante."
+        : "Aún no hay libros aquí.";
+
+    private bool ShowSlotAt(int index) => IsActive && _hoverIndex == index;
+
+    private static string MetaFor(ReadingStatus s) => s switch
+    {
+        ReadingStatus.ToRead  => "En cola de lectura",
+        ReadingStatus.Reading => "En curso",
+        ReadingStatus.Read    => "Terminados",
+        _ => string.Empty
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                    "import", "./js/kanbanInterop.js");
+            }
+            catch (JSException)
+            {
+                _jsModule = null;
+            }
+            catch (InvalidOperationException)
+            {
+                _jsModule = null;
+            }
+        }
+    }
+
+    private Task HandleOpen(int id) => OnOpen.InvokeAsync(id);
+    private Task HandleCardDragStart(int id) => OnDragStart.InvokeAsync(id);
+    private Task HandleCardDragEnd() => OnDragEnd.InvokeAsync();
+
+    private void HandleDragEnter(DragEventArgs e)
+    {
+        if (DraggingBookId is null) return;
+        _dragDepth++;
+        _isOver = true;
+    }
+
+    private void HandleDragLeave(DragEventArgs e)
+    {
+        if (DraggingBookId is null) return;
+        _dragDepth = Math.Max(0, _dragDepth - 1);
+        if (_dragDepth == 0)
+        {
+            _isOver = false;
+            _hoverIndex = null;
+        }
+    }
+
+    private async Task HandleDragOver(DragEventArgs e)
+    {
+        if (DraggingBookId is null) return;
+        if (_jsModule is null) return;
+        if (e.ClientY <= 0) return;
+
+        _isOver = true;
+
+        var now = DateTime.UtcNow;
+        if ((now - _lastIndexCompute).TotalMilliseconds < IndexThrottleMs) return;
+        _lastIndexCompute = now;
+
+        try
+        {
+            _hoverIndex = await _jsModule.InvokeAsync<int>(
+                "findDropIndex", _dropZoneRef, e.ClientY);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { _hoverIndex ??= 0; }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        var bookId = DraggingBookId;
+        if (bookId is null) return;
+
+        _isOver = false;
+        _dragDepth = 0;
+        _hoverIndex = null;
+
+        var index = 0;
+        if (_jsModule is not null && e.ClientY > 0)
+        {
+            try
+            {
+                index = await _jsModule.InvokeAsync<int>(
+                    "findDropIndex", _dropZoneRef, e.ClientY);
+            }
+            catch (JSDisconnectedException) { }
+            catch (JSException) { }
+            catch (OperationCanceledException) { }
+        }
+
+        await OnDropBook.InvokeAsync((bookId.Value, Status, index));
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule is not null)
+        {
+            try { await _jsModule.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+    }
+}

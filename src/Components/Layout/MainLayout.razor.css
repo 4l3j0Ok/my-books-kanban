@@ -1,0 +1,240 @@
+/* ---- App shell: layout raíz ---- */
+::deep .app-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background: var(--page);
+}
+
+::deep .app-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Masthead (cabecera editorial) ---- */
+::deep .masthead {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: saturate(140%) blur(6px);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+::deep .masthead-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1.25rem 1.5rem 0.75rem;
+}
+
+::deep .masthead-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+::deep .masthead-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--ink);
+  border-radius: 9999px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--brass);
+  box-shadow: inset 0 0 0 3px var(--surface);
+}
+
+::deep .masthead-titles {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  min-width: 0;
+}
+
+::deep .masthead-title {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+::deep .masthead-title em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--brass-strong);
+}
+
+::deep .masthead-sub {
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+::deep .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+::deep .theme-toggle:hover {
+  color: var(--brass-strong);
+  border-color: var(--brass);
+  background: var(--surface-2);
+}
+
+::deep .theme-toggle span[aria-hidden] {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* Doble regla editorial: brass + ink, paralelas */
+::deep .masthead-rule {
+  position: relative;
+  height: 5px;
+  margin: 0 1.5rem;
+}
+
+::deep .masthead-rule::before,
+::deep .masthead-rule::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--brass);
+}
+
+::deep .masthead-rule::before { top: 1px; }
+::deep .masthead-rule::after  { top: 4px; background: color-mix(in srgb, var(--ink) 50%, transparent); }
+
+::deep .masthead-nav {
+  padding: 0.6rem 1.5rem 0.85rem;
+}
+
+::deep .masthead-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+::deep .masthead-nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0.05rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+::deep .masthead-nav-link:hover { color: var(--ink); }
+
+::deep .masthead-nav-link.is-active { color: var(--ink); }
+
+::deep .masthead-nav-link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--brass);
+}
+
+::deep .masthead-nav-num {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--brass);
+  font-weight: 500;
+}
+
+/* ---- Colophon (footer) ---- */
+::deep .colophon {
+  margin-top: auto;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--surface-2);
+}
+
+::deep .colophon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+::deep .colophon-mark {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--brass-strong);
+  text-transform: none;
+}
+
+::deep .colophon-text {
+  flex: 1 1 auto;
+  text-align: center;
+  min-width: 12rem;
+}
+
+::deep .colophon-edition {
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  ::deep .masthead-row    { padding: 0.9rem 1rem 0.6rem; gap: 0.75rem; }
+  ::deep .masthead-rule   { margin: 0 1rem; }
+  ::deep .masthead-nav    { padding: 0.5rem 1rem 0.7rem; }
+  ::deep .masthead-title  { font-size: 1.3rem; }
+  ::deep .masthead-mark   { width: 2.1rem; height: 2.1rem; font-size: 0.75rem; }
+  ::deep .theme-toggle-label { display: none; }
+  ::deep .colophon-inner  { padding: 0.7rem 1rem; font-size: 0.6rem; }
+  ::deep .colophon-text   { order: 3; flex-basis: 100%; text-align: left; }
+}

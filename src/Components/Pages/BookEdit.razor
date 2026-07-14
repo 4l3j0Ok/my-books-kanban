@@ -1,0 +1,111 @@
+@page "/books/{Id:int}/edit"
+@inject IBookService BookService
+@inject ICategoryService CategoryService
+@inject ICoverStorageService CoverStorage
+@inject KanbanState State
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Editar libro · My Books Kanban</PageTitle>
+
+<section class="page">
+    <nav aria-label="breadcrumb" class="breadcrumb">
+        <a href="" class="breadcrumb-link">Tablero</a>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <a href=@($"books/{Id}") class="breadcrumb-link">Detalle</a>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current" aria-current="page">Editar</span>
+    </nav>
+
+    <header class="page-header">
+        <p class="page-eyebrow">
+            <span class="page-eyebrow-rule" aria-hidden="true"></span>
+            <span>Edición</span>
+            <span class="page-eyebrow-rule" aria-hidden="true"></span>
+        </p>
+        <h1 class="page-title">Editar libro</h1>
+    </header>
+
+    <div class="page-body">
+        @if (model is null)
+        {
+            <div class="page-body-narrow">
+                <EmptyState Title="Libro no encontrado"
+                            Description="No se puede editar: el libro no existe."
+                            Icon="⚠️">
+                    <a class="btn btn-primary" href="">Volver al tablero</a>
+                </EmptyState>
+            </div>
+        }
+        else
+        {
+            <div class="edit-grid">
+                <div>
+                    <BookForm Model="model"
+                              Categories="categories"
+                              OnSubmit="HandleSubmit"
+                              OnCancel="Cancel" />
+                </div>
+                <aside class="danger-zone">
+                    <h2 class="danger-zone-title">Zona peligrosa</h2>
+                    <p class="danger-zone-text">
+                        Eliminar el libro es permanente. Asegúrate antes de continuar.
+                    </p>
+                    <button class="btn btn-danger" type="button" @onclick="RequestDelete">Eliminar libro</button>
+                </aside>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private BookFormModel? model;
+    private List<CategoryListItem> categories = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        State.Changed += OnStateChanged;
+        categories = (await CategoryService.ListAsync()).ToList();
+        model = await BookService.GetForEditAsync(Id);
+    }
+
+    private async Task HandleSubmit(BookFormModel m)
+    {
+        try
+        {
+            if (m.CoverFile is not null)
+            {
+                var path = await CoverStorage.SaveAsync(m.CoverFile, m.CoverPath);
+                if (path is not null) m.CoverPath = path;
+            }
+            await BookService.UpdateAsync(m);
+            State.NotifySuccess("Libro actualizado.");
+            Nav.NavigateTo($"books/{Id}");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private void Cancel() => Nav.NavigateTo($"books/{Id}");
+
+    private async Task RequestDelete()
+    {
+        try
+        {
+            await BookService.DeleteAsync(Id);
+            State.NotifySuccess("Libro eliminado.");
+            Nav.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => State.Changed -= OnStateChanged;
+}

@@ -1,0 +1,149 @@
+@page "/categories"
+@inject ICategoryService CategoryService
+@inject KanbanState State
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Categorías · My Books Kanban</PageTitle>
+
+<section class="page">
+    <nav aria-label="breadcrumb" class="breadcrumb">
+        <a href="" class="breadcrumb-link">Tablero</a>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current" aria-current="page">Categorías</span>
+    </nav>
+
+    <header class="page-header">
+        <p class="page-eyebrow">
+            <span class="page-eyebrow-rule" aria-hidden="true"></span>
+            <span>Índice</span>
+            <span class="page-eyebrow-rule" aria-hidden="true"></span>
+        </p>
+        <h1 class="page-title">Categorías</h1>
+        <p class="page-lede">Una taxonomía personal para agrupar tu biblioteca. Edita, agrega o retira lo que ya no uses.</p>
+    </header>
+
+    <div class="page-body page-body-narrow">
+        <form class="index-bar" @onsubmit="HandleCreate">
+            <div class="index-fields">
+                <div class="index-field index-field-grow">
+                    <label for="cat-name" class="index-label">Nueva categoría</label>
+                    <InputText id="cat-name" class="index-input" @bind-Value="newName" placeholder="Nombre de la categoría…" />
+                </div>
+            </div>
+            <div class="index-actions">
+                <button class="btn btn-primary" type="submit">Agregar</button>
+            </div>
+        </form>
+
+        @if (categories.Count == 0)
+        {
+            <EmptyState Title="Sin categorías" Description="Agrega la primera usando el formulario." Icon="🏷️" />
+        }
+        else
+        {
+            <ol class="category-list" aria-label="Listado de categorías">
+                @foreach (var c in categories)
+                {
+                    <li class="category-row">
+                        <div class="category-info">
+                            @if (editingId == c.Id)
+                            {
+                                <InputText class="index-input" @bind-Value="editName" />
+                            }
+                            else
+                            {
+                                <strong class="category-name">@c.Name</strong>
+                                <span class="category-count">@c.BookCount libros</span>
+                            }
+                        </div>
+                        <div class="category-actions">
+                            @if (editingId == c.Id)
+                            {
+                                <button class="btn btn-primary" type="button" @onclick="SaveEdit">Guardar</button>
+                                <button class="btn btn-ghost" type="button" @onclick="CancelEdit">Cancelar</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-ghost" type="button" @onclick="() => StartEdit(c)">Editar</button>
+                                <button class="btn btn-danger" type="button" @onclick="() => TryDelete(c)">Eliminar</button>
+                            }
+                        </div>
+                    </li>
+                }
+            </ol>
+        }
+    </div>
+</section>
+
+@code {
+    private List<CategoryListItem> categories = new();
+    private string newName = string.Empty;
+    private int? editingId;
+    private string editName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += OnStateChanged;
+        await Reload();
+    }
+
+    private async Task Reload() => categories = (await CategoryService.ListAsync()).ToList();
+
+    private async Task HandleCreate()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(newName)) { State.NotifyError("Escribe un nombre."); return; }
+            await CategoryService.CreateAsync(newName);
+            newName = string.Empty;
+            await Reload();
+            State.NotifySuccess("Categoría agregada.");
+        }
+        catch (Exception ex) { State.NotifyError(ex.Message); }
+    }
+
+    private void StartEdit(CategoryListItem c)
+    {
+        editingId = c.Id; editName = c.Name;
+    }
+
+    private void CancelEdit()
+    {
+        editingId = null; editName = string.Empty;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editingId is null) return;
+        try
+        {
+            await CategoryService.UpdateAsync(editingId.Value, editName);
+            editingId = null; editName = string.Empty;
+            await Reload();
+            State.NotifySuccess("Categoría actualizada.");
+        }
+        catch (Exception ex) { State.NotifyError(ex.Message); }
+    }
+
+    private async Task TryDelete(CategoryListItem c)
+    {
+        var result = await CategoryService.DeleteAsync(c.Id);
+        switch (result)
+        {
+            case CategoryDeletionResult.Deleted:
+                State.NotifySuccess("Categoría eliminada.");
+                await Reload();
+                break;
+            case CategoryDeletionResult.InUse:
+                State.NotifyError("No se puede eliminar: hay libros que la usan.");
+                break;
+            case CategoryDeletionResult.NotFound:
+                State.NotifyError("La categoría no existe.");
+                break;
+        }
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => State.Changed -= OnStateChanged;
+}

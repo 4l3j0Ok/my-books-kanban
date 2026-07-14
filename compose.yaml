@@ -1,0 +1,30 @@
+name: my-books-kanban
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-books-kanban:dev
+    container_name: my-books-kanban
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: "Data Source=/data/my-books-kanban.db"
+      DOTNET_ENVIRONMENT: Production
+    volumes:
+      - kb-data:/data
+      - kb-covers:/app/wwwroot/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  kb-data:
+  kb-covers:

@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- SQLitePCLRaw.lib.e_sqlite3 2.1.10 viene con una vulnerabilidad conocida (upstream).
+         La suprimimos localmente para mantener limpia la salida de build. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+</Project>

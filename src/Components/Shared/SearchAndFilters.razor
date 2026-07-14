@@ -1,0 +1,69 @@
+@* Buscador y filtros para el Kanban. *@
+
+<form class="@($"index-bar {Class}")" @onsubmit="HandleSubmit" role="search" aria-label="Buscar y filtrar libros">
+    <div class="index-fields">
+        <div class="index-field index-field-grow">
+            <label for="filter-search" class="index-label">Buscar</label>
+            <InputText id="filter-search" class="index-input" @bind-Value="Term" placeholder="Título o autor…" />
+        </div>
+        <div class="index-field">
+            <label for="filter-category" class="index-label">Categoría</label>
+            <InputSelect id="filter-category" class="index-select" @bind-Value="CategoryProxy">
+                <option value="">Todas</option>
+                @foreach (var c in Categories)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="index-field">
+            <label for="filter-status" class="index-label">Estado</label>
+            <InputSelect id="filter-status" class="index-select" @bind-Value="StatusProxy">
+                <option value="">Todos</option>
+                <option value="@ReadingStatus.ToRead">Por leer</option>
+                <option value="@ReadingStatus.Reading">Leyendo</option>
+                <option value="@ReadingStatus.Read">Leído</option>
+            </InputSelect>
+        </div>
+    </div>
+    <div class="index-actions">
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+        <button type="button" class="btn btn-ghost" @onclick="HandleClear" aria-label="Limpiar filtros">Limpiar</button>
+    </div>
+</form>
+
+@code {
+    [Parameter] public string? Term { get; set; }
+    [Parameter] public int? CategoryId { get; set; }
+    [Parameter] public ReadingStatus? Status { get; set; }
+    [Parameter] public IReadOnlyList<CategoryListItem> Categories { get; set; } = Array.Empty<CategoryListItem>();
+
+    [Parameter] public EventCallback<FilterPayload> OnApply { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private string CategoryProxy
+    {
+        get => CategoryId?.ToString() ?? string.Empty;
+        set => CategoryId = int.TryParse(value, out var v) ? v : null;
+    }
+
+    private string StatusProxy
+    {
+        get => Status?.ToString() ?? string.Empty;
+        set
+        {
+            if (string.IsNullOrEmpty(value)) { Status = null; return; }
+            if (Enum.TryParse<ReadingStatus>(value, out var v)) Status = v;
+        }
+    }
+
+    private Task HandleSubmit() => OnApply.InvokeAsync(new FilterPayload(Term, CategoryId, Status));
+    private Task HandleClear()
+    {
+        Term = null; CategoryId = null; Status = null;
+        return OnClear.InvokeAsync();
+    }
+
+    public sealed record FilterPayload(string? Term, int? CategoryId, ReadingStatus? Status);
+}
