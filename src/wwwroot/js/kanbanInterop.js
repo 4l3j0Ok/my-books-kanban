@@ -1,4 +1,3 @@
-// Módulo ES6 de soporte para la UI.
 // Carga única: tema + clipboard + scroll suave.
 // No contiene reglas de negocio.
 

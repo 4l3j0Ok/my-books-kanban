@@ -49,8 +49,11 @@ public class BookValidationTests
     {
         var model = new BookFormModel
         {
-            Title = "x", Author = "y", CategoryId = 1,
-            PageCount = total, CurrentPage = current
+            Title = "x",
+            Author = "y",
+            CategoryId = 1,
+            PageCount = total,
+            CurrentPage = current
         };
         var errors = BookFormValidator.ValidateBusinessRules(model);
         Assert.NotEmpty(errors);
@@ -61,7 +64,9 @@ public class BookValidationTests
     {
         var model = new BookFormModel
         {
-            Title = "x", Author = "y", CategoryId = 1,
+            Title = "x",
+            Author = "y",
+            CategoryId = 1,
             StartedAt = new DateTime(2025, 1, 10),
             FinishedAt = new DateTime(2025, 1, 1)
         };

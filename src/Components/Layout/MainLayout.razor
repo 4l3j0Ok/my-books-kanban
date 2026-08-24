@@ -56,9 +56,9 @@
 
     <footer class="colophon" role="contentinfo">
         <div class="colophon-inner">
-            <span class="colophon-mark">M·B·K</span>
-            <span class="colophon-text">A reading room &middot; set in Fraunces, Figtree &amp; JetBrains Mono</span>
-            <span class="colophon-edition">Ed. MMXXVI</span>
+            <span class="colophon-mark">My·Books·Kanban</span>
+            <span class="colophon-text">Tus libros organizados</span>
+            <span class="colophon-text">© 2024 - @CurrentYear - Desarrollo por Alejo Sarmiento.</span>
         </div>
     </footer>
 </div>
@@ -99,6 +99,7 @@
         State.NotifyInfo("Usa el botón de tema para alternar claro/oscuro.");
     }
 
+    public int CurrentYear => DateTime.Now.Year;
     public void Dispose()
     {
         State.Changed -= OnStateChanged;

@@ -40,7 +40,9 @@ public class BookServiceTests : IAsyncLifetime
         var before = (await _sut.GetBoardAsync()).Columns[ReadingStatus.ToRead].Count;
         var id = await _sut.CreateAsync(new BookFormModel
         {
-            Title = "Neuromante", Author = "William Gibson", CategoryId = cat.Id,
+            Title = "Neuromante",
+            Author = "William Gibson",
+            CategoryId = cat.Id,
             ReadingStatus = ReadingStatus.ToRead
         });
         Assert.True(id > 0);

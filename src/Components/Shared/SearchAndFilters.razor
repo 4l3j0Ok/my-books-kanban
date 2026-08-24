@@ -16,17 +16,8 @@
                 }
             </InputSelect>
         </div>
-        <div class="index-field">
-            <label for="filter-status" class="index-label">Estado</label>
-            <InputSelect id="filter-status" class="index-select" @bind-Value="StatusProxy">
-                <option value="">Todos</option>
-                <option value="@ReadingStatus.ToRead">Por leer</option>
-                <option value="@ReadingStatus.Reading">Leyendo</option>
-                <option value="@ReadingStatus.Read">Leído</option>
-            </InputSelect>
-        </div>
     </div>
-    <div class="index-actions">
+    <div class="index-actions mt-4">
         <button type="submit" class="btn btn-primary">Aplicar</button>
         <button type="button" class="btn btn-ghost" @onclick="HandleClear" aria-label="Limpiar filtros">Limpiar</button>
     </div>

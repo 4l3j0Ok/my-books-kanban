@@ -7,7 +7,7 @@
     <div class="@($"fixed bottom-4 right-4 z-50 flex max-w-[calc(100%-2rem)] items-center gap-2 rounded-sm border-l-2 {BorderClass} bg-[var(--surface)] p-3 font-body text-sm text-[var(--ink)] shadow-md")" role="status" aria-live="polite">
         <span>@State.Notification</span>
         <button type="button" class="ms-2 rounded-sm p-1 font-mono text-xs text-[var(--muted)] hover:bg-[var(--surface-2)]" aria-label="Cerrar notificación"
-                @onclick="() => State.ClearNotification()">✕</button>
+                @onclick="() => State.ClearNotification()">X</button>
     </div>
 }
 
