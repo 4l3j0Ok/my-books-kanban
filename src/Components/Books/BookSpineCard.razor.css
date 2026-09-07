@@ -1,3 +1,7 @@
+/* Sólo lo propio de la tarjeta arrastrable. La superficie del lomo (textura y
+   halo del texto) vive en app.src.css porque la comparte la vista previa del
+   formulario. */
+
 /* ::deep needed because Blazor scopes component styles */
 ::deep .spine-card {
   transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, opacity 0.2s ease-out;

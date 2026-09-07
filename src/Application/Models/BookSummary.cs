@@ -8,6 +8,7 @@ public sealed record BookSummary(
     string Title,
     string Author,
     string? CoverPath,
+    string? SpineColor,
     ReadingStatus Status,
     int Position,
     int? CurrentPage,

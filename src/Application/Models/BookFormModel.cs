@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Components.Forms;
 using MyBooksKanban.Domain.Enums;
 
 namespace MyBooksKanban.Application.Models;
@@ -10,6 +9,12 @@ namespace MyBooksKanban.Application.Models;
 /// </summary>
 public class BookFormModel
 {
+    /// <summary>
+    /// Tope de páginas admitido. Vive aquí porque las anotaciones del formulario,
+    /// el servicio y el paginador del detalle deben compartir exactamente el mismo límite.
+    /// </summary>
+    public const int MaxTrackablePage = 20_000;
+
     public int? Id { get; set; }
 
     [Required(ErrorMessage = "El título es obligatorio.")]
@@ -25,6 +30,14 @@ public class BookFormModel
 
     public string? CoverPath { get; set; }
 
+    /// <summary>
+    /// Color del lomo (<c>#RRGGBB</c>). Se propone solo al elegir portada, a partir
+    /// del color dominante de la imagen, y el usuario puede cambiarlo. En
+    /// <c>null</c> el lomo toma el color de la categoría.
+    /// </summary>
+    [RegularExpression("^#[0-9a-fA-F]{6}$", ErrorMessage = "El color del lomo debe ser hexadecimal (#RRGGBB).")]
+    public string? SpineColor { get; set; }
+
     [Required(ErrorMessage = "Selecciona un estado de lectura.")]
     public ReadingStatus ReadingStatus { get; set; } = ReadingStatus.ToRead;
 
@@ -32,10 +45,10 @@ public class BookFormModel
     [Range(1, int.MaxValue, ErrorMessage = "Selecciona una categoría válida.")]
     public int CategoryId { get; set; }
 
-    [Range(1, 20000, ErrorMessage = "El total de páginas debe estar entre 1 y 20000.")]
+    [Range(1, MaxTrackablePage, ErrorMessage = "El total de páginas debe estar entre 1 y 20000.")]
     public int? PageCount { get; set; }
 
-    [Range(0, 20000, ErrorMessage = "La página actual debe estar entre 0 y 20000.")]
+    [Range(0, MaxTrackablePage, ErrorMessage = "La página actual debe estar entre 0 y 20000.")]
     public int? CurrentPage { get; set; }
 
     [Range(1, 5, ErrorMessage = "La calificación debe estar entre 1 y 5.")]
@@ -47,6 +60,9 @@ public class BookFormModel
     public DateTime? StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
 
-    /// <summary>Archivo de portada subido. No se persiste en el modelo de dominio.</summary>
-    public IBrowserFile? CoverFile { get; set; }
+    /// <summary>
+    /// Portada recién elegida, ya leída a memoria. Se escribe en disco al guardar.
+    /// No se persiste en el modelo de dominio.
+    /// </summary>
+    public CoverUpload? CoverUpload { get; set; }
 }

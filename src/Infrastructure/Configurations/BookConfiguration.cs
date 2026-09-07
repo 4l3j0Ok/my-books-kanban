@@ -17,6 +17,7 @@ public class BookConfiguration : IEntityTypeConfiguration<Book>
         builder.Property(b => b.Author).IsRequired().HasMaxLength(120);
         builder.Property(b => b.Description).HasMaxLength(2000);
         builder.Property(b => b.CoverPath).HasMaxLength(300);
+        builder.Property(b => b.SpineColor).HasMaxLength(7);
         builder.Property(b => b.Isbn).HasMaxLength(20);
 
         builder.Property(b => b.ReadingStatus)

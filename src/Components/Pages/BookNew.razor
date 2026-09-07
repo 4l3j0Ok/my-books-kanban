@@ -48,10 +48,10 @@
         try
         {
             var id = await BookService.CreateAsync(m, default);
-            if (m.CoverFile is not null)
+            if (m.CoverUpload is not null)
             {
-                var path = await CoverStorage.SaveAsync(m.CoverFile, null);
-                if (path is not null) await BookService.UpdateCoverAsync(id, path);
+                var path = await CoverStorage.SaveAsync(m.CoverUpload, null);
+                await BookService.UpdateCoverAsync(id, path);
             }
             State.NotifySuccess("Libro creado correctamente.");
             Nav.NavigateTo($"books/{id}");

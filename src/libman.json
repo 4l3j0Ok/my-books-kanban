@@ -1,0 +1,10 @@
+{
+  "version": "3.0",
+  "defaultProvider": "unpkg",
+  "defaultDestination": "wwwroot/lib/",
+  "libraries": [
+    {
+      "library": "animate.css@latest"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using MyBooksKanban.Application.Interfaces;
+using MyBooksKanban.Application.Models;
 
 namespace MyBooksKanban.Application.Services;
 
@@ -16,16 +17,21 @@ public class CoverStorageService : ICoverStorageService
     private const long MaxBytes = 4 * 1024 * 1024; // 4 MB
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<CoverStorageService> _logger;
+    private readonly IDominantColorExtractor _colorExtractor;
 
-    public CoverStorageService(IWebHostEnvironment env, ILogger<CoverStorageService> logger)
+    public CoverStorageService(
+        IWebHostEnvironment env,
+        ILogger<CoverStorageService> logger,
+        IDominantColorExtractor colorExtractor)
     {
         _env = env;
         _logger = logger;
+        _colorExtractor = colorExtractor;
     }
 
-    public async Task<string?> SaveAsync(IBrowserFile file, string? previousRelativePath, CancellationToken ct = default)
+    public async Task<CoverUpload> ReadAsync(IBrowserFile file, CancellationToken ct = default)
     {
-        if (file is null) return null;
+        ArgumentNullException.ThrowIfNull(file);
 
         var ext = Path.GetExtension(file.Name);
         if (!AllowedExtensions.Contains(ext))
@@ -35,16 +41,30 @@ public class CoverStorageService : ICoverStorageService
         if (file.Size > MaxBytes)
             throw new ValidationException("La portada supera el tamaño máximo permitido (4 MB).");
 
+        using var buffer = new MemoryStream();
+        await using (var source = file.OpenReadStream(MaxBytes, ct))
+        {
+            await source.CopyToAsync(buffer, ct);
+        }
+
+        buffer.Position = 0;
+        var dominantColor = await ExtractDominantColorAsync(buffer, ct);
+
+        return new CoverUpload(file.Name, file.ContentType, buffer.ToArray(), dominantColor);
+    }
+
+    public async Task<string> SaveAsync(CoverUpload upload, string? previousRelativePath, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(upload);
+
         var coversRoot = GetCoversRoot();
         Directory.CreateDirectory(coversRoot);
 
-        var fileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
+        var ext = Path.GetExtension(upload.FileName).ToLowerInvariant();
+        var fileName = $"{Guid.NewGuid():N}{ext}";
         var absolutePath = Path.Combine(coversRoot, fileName);
 
-        await using (var stream = File.Create(absolutePath))
-        {
-            await file.OpenReadStream(MaxBytes, ct).CopyToAsync(stream, ct);
-        }
+        await File.WriteAllBytesAsync(absolutePath, upload.Content, ct);
 
         var publicPath = $"/uploads/covers/{fileName}";
         _logger.LogInformation("Portada guardada: {Path}", publicPath);
@@ -77,6 +97,32 @@ public class CoverStorageService : ICoverStorageService
         }
 
         return Task.CompletedTask;
+    }
+
+    public async Task<string?> GetDominantColorAsync(string? relativePath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath)) return null;
+
+        var absolutePath = Path.Combine(GetCoversRoot(), Path.GetFileName(relativePath));
+        if (!File.Exists(absolutePath)) return null;
+
+        await using var stream = File.OpenRead(absolutePath);
+        return await ExtractDominantColorAsync(stream, ct);
+    }
+
+    private async Task<string?> ExtractDominantColorAsync(Stream stream, CancellationToken ct)
+    {
+        try
+        {
+            return await _colorExtractor.ExtractAsync(stream, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Un color no calculable no debe impedir guardar la portada: el
+            // formulario deja el color que ya hubiera y el usuario puede elegirlo.
+            _logger.LogWarning(ex, "No se pudo calcular el color dominante de la portada");
+            return null;
+        }
     }
 
     private string GetCoversRoot()

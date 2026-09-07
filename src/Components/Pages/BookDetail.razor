@@ -19,8 +19,7 @@
         @if (book is null)
         {
             <EmptyState Title="Libro no encontrado"
-                        Description="El libro que buscas no existe o fue eliminado."
-                        Icon="🔍">
+                Description="El libro que buscas no existe o fue eliminado.">
                 <a class="btn btn-primary" href="">Volver al tablero</a>
             </EmptyState>
         }
@@ -28,11 +27,12 @@
         {
             <div class="catalogue-frame">
                 <BookCoverDetail Book="book"
-                                 FormModel="form"
-                                 Categories="categories"
-                                 OnClose="ClosePage"
-                                 OnDelete="ConfirmDelete"
-                                 OnSave="Save" />
+                    FormModel="form"
+                    Categories="categories"
+                    OnClose="ClosePage"
+                    OnDelete="ConfirmDelete"
+                    OnSave="Save"
+                    OnProgressChange="ChangeProgress" />
             </div>
         }
     </div>
@@ -57,16 +57,28 @@
     {
         try
         {
-            if (model.CoverFile is not null)
-            {
-                var previous = model.CoverPath;
-                var path = await CoverStorage.SaveAsync(model.CoverFile, previous);
-                if (path is not null) model.CoverPath = path;
-            }
+            if (model.CoverUpload is not null)
+                model.CoverPath = await CoverStorage.SaveAsync(model.CoverUpload, model.CoverPath);
             await BookService.UpdateAsync(model);
             State.NotifySuccess("Cambios guardados.");
             book = await BookService.GetSummaryAsync(Id);
             form = await BookService.GetForEditAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private async Task ChangeProgress(int page)
+    {
+        try
+        {
+            var updated = await BookService.UpdateProgressAsync(Id, page);
+            if (updated is null) return;
+
+            book = updated;
+            if (form is not null) form.CurrentPage = updated.CurrentPage;
         }
         catch (Exception ex)
         {

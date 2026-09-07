@@ -1,24 +1,22 @@
 @* Panel de detalle con apariencia de ficha de catálogo. *@
 
-<article class="catalogue" role="complementary" aria-label="Detalle del libro"
-         id="@($"book-detail-{Book?.Id}")">
+<article class="catalogue @(HasCover ? "has-cover" : null)" style="@CoverStyle"
+         role="complementary" aria-label="Detalle del libro" id="@($"book-detail-{Book?.Id}")">
     @if (Book is null)
     {
         <div class="catalogue-empty">
-            <EmptyState Title="Selecciona un libro"
-                        Description="Haz clic en un lomo del tablero para ver su detalle."
-                        Icon="🔍" />
+            <EmptyState Title="Selecciona un libro" Description="Haz clic en un lomo del tablero para ver su detalle." />
         </div>
     }
     else
     {
         <header class="catalogue-header">
             <span class="catalogue-eyebrow">Ficha de catálogo</span>
-            <button type="button" class="catalogue-close"
-                    aria-label="Cerrar detalle" @onclick="() => OnClose.InvokeAsync()">✕</button>
+            <button type="button" class="catalogue-close" aria-label="Cerrar detalle"
+                    @onclick="() => OnClose.InvokeAsync()">X</button>
         </header>
 
-        <div class="catalogue-title-block">
+        <div class="catalogue-title-block @PanelClass">
             <h2 id="drawer-title" class="catalogue-title">@Book.Title</h2>
             <p class="catalogue-byline">de <span>@Book.Author</span></p>
         </div>
@@ -26,29 +24,23 @@
         <div class="catalogue-rule" aria-hidden="true"></div>
 
         <div class="catalogue-body">
-            <figure class="catalogue-cover">
-                @if (!string.IsNullOrEmpty(Book.CoverPath))
-                {
-                    <img src="@Book.CoverPath" alt="@($"Portada de {Book.Title}")" />
-                }
-                else
-                {
-                    <div class="catalogue-cover-placeholder" aria-hidden="true">📕</div>
-                }
-            </figure>
+            @if (!HasCover)
+            {
+                <figure class="catalogue-cover">
+                    <div class="catalogue-cover-placeholder" aria-hidden="true">Sin portada</div>
+                </figure>
+            }
 
             @if (Editing)
             {
-                <div class="catalogue-edit">
-                    <BookForm Model="FormModel!"
-                              Categories="Categories"
-                              OnSubmit="HandleSave"
-                              OnCancel="() => Editing = false" />
+                <div class="catalogue-edit @PanelClass">
+                    <BookForm Model="FormModel!" Categories="Categories" OnSubmit="HandleSave"
+                        OnCancel="() => Editing = false" />
                 </div>
             }
             else
             {
-                <dl class="catalogue-fields">
+                <dl class="catalogue-fields @PanelClass">
                     <div class="catalogue-field">
                         <dt>Categoría</dt>
                         <dd>@Book.CategoryName</dd>
@@ -57,36 +49,55 @@
                         <dt>Estado</dt>
                         <dd>@StatusLabel(Book.Status)</dd>
                     </div>
-                    @if (Book.PageCount is { } pages)
-                    {
-                        <div class="catalogue-field">
-                            <dt>Progreso</dt>
-                            <dd class="catalogue-progress">
-                                <span class="catalogue-progress-track" aria-hidden="true">
+                    <div class="catalogue-field catalogue-field-progress">
+                        <dt>Progreso</dt>
+                        <dd class="catalogue-progress">
+                            @if (Book.PageCount is { } pages)
+                            {
+                                <span class="catalogue-progress-track" role="progressbar"
+                                      aria-valuemin="0" aria-valuemax="@pages" aria-valuenow="@CurrentPage"
+                                      aria-label="Páginas leídas">
                                     <span class="catalogue-progress-bar" style="width:@ProgressPct(pages)%"></span>
                                 </span>
-                                <span class="catalogue-progress-num">@(Book.CurrentPage ?? 0) / @pages</span>
-                            </dd>
-                        </div>
-                    }
+                            }
+                            <div class="catalogue-pager">
+                                <button type="button" class="catalogue-pager-step"
+                                        aria-label="Retroceder una página" disabled="@(!CanRewind)"
+                                        @onclick="() => StepPage(-1)">&#8722;</button>
+                                <span class="catalogue-pager-figure">
+                                    @* La clave fuerza un input nuevo en cada commit: si el
+                                       servidor recorta el número escrito, el DOM se sincroniza. *@
+                                    <input @key="_pageInputEpoch" type="number" class="catalogue-pager-input"
+                                           inputmode="numeric" min="0" max="@MaxPage"
+                                           aria-label="@PageInputLabel" value="@CurrentPage"
+                                           @onchange="SetPage" />
+                                    <span class="catalogue-pager-total" aria-hidden="true">@TotalLabel</span>
+                                </span>
+                                <button type="button" class="catalogue-pager-step"
+                                        aria-label="Avanzar una página" disabled="@(!CanAdvance)"
+                                        @onclick="() => StepPage(1)">+</button>
+                            </div>
+                        </dd>
+                    </div>
                     @if (Book.Rating is { } rating)
                     {
                         <div class="catalogue-field">
                             <dt>Calificación</dt>
                             <dd class="catalogue-rating">
-                                @for (var i = 0; i < 5; i++)
+                                @* Agregamos ★ multiplicado por rating *@
+                                @for (var i = 0; i < rating; i++)
                                 {
-                                    <span aria-hidden="true">@(i < rating ? "★" : "☆")</span>
+                                    <span class="catalogue-rating-star" aria-hidden="true">★</span>
                                 }
                             </dd>
                         </div>
                     }
                 </dl>
 
-                <div class="catalogue-actions">
+                <div class="catalogue-actions @PanelClass">
                     <button class="btn btn-primary" type="button" @onclick="() => Editing = true">Editar</button>
-                    <button class="btn btn-danger" type="button" @onclick="() => OnDelete.InvokeAsync(Book.Id)">Eliminar</button>
-                    <button class="btn btn-ghost" type="button" @onclick="() => OnClose.InvokeAsync()">Cerrar</button>
+                    <button class="btn btn-danger" type="button"
+                            @onclick="() => OnDelete.InvokeAsync(Book.Id)">Eliminar</button>
                 </div>
             }
         </div>
@@ -102,7 +113,34 @@
     [Parameter] public EventCallback<int> OnDelete { get; set; }
     [Parameter] public EventCallback<BookFormModel> OnSave { get; set; }
 
+    /// <summary>Página absoluta elegida por el lector. El padre persiste y devuelve el libro.</summary>
+    [Parameter] public EventCallback<int> OnProgressChange { get; set; }
+
     private bool Editing { get; set; }
+
+    private int _pageInputEpoch;
+
+    private bool HasCover => !string.IsNullOrWhiteSpace(Book?.CoverPath);
+
+    /// <summary>Clase de tarjeta clara: sólo cuando la portada actúa de fondo.</summary>
+    private string? PanelClass => HasCover ? "catalogue-panel" : null;
+
+    /// <summary>
+    /// Portada como fondo de la ficha, con el velo negro al 50% como primera capa.
+    /// Ambas capas quedan fijas al borde del contenedor: el contenido hace scroll, la imagen no.
+    /// </summary>
+    private string? CoverStyle => HasCover
+        ? $"background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{CssUrl(Book!.CoverPath!)}');"
+        : null;
+
+    private static string CssUrl(string path) => path
+        .Replace("\\", "%5C")
+        .Replace("'", "%27")
+        .Replace("\"", "%22")
+        .Replace("(", "%28")
+        .Replace(")", "%29")
+        .Replace("\n", string.Empty)
+        .Replace("\r", string.Empty);
 
     protected override void OnParametersSet()
     {
@@ -115,6 +153,35 @@
     {
         if (Book?.CurrentPage is not { } current || total <= 0) return 0;
         return Math.Clamp((int)Math.Round(100.0 * current / total), 0, 100);
+    }
+
+    private int CurrentPage => Book?.CurrentPage ?? 0;
+
+    /// <summary>Sin total declarado el lector sigue pudiendo anotar la página; el tope es el de validación.</summary>
+    private int MaxPage => Book?.PageCount ?? BookFormModel.MaxTrackablePage;
+
+    private bool CanRewind => CurrentPage > 0;
+
+    private bool CanAdvance => CurrentPage < MaxPage;
+
+    private string TotalLabel => Book?.PageCount is { } total ? $"/ {total}" : "págs.";
+
+    private string PageInputLabel => Book?.PageCount is { } total
+        ? $"Página actual de {total}"
+        : "Página actual";
+
+    private Task StepPage(int delta) => CommitPage(CurrentPage + delta);
+
+    private Task SetPage(ChangeEventArgs e) =>
+        CommitPage(int.TryParse(e.Value?.ToString(), out var page) ? page : CurrentPage);
+
+    private Task CommitPage(int page)
+    {
+        // Recortamos aquí para que la ficha nunca muestre un número que el
+        // servicio va a rechazar; el servicio vuelve a recortar por su cuenta.
+        var target = Math.Clamp(page, 0, MaxPage);
+        _pageInputEpoch++;
+        return target == CurrentPage ? Task.CompletedTask : OnProgressChange.InvokeAsync(target);
     }
 
     private static string StatusLabel(ReadingStatus s) => s switch

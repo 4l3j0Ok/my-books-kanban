@@ -6,16 +6,15 @@
     <header class="masthead" role="banner">
         <div class="masthead-row">
             <a class="masthead-brand" href="" aria-label="Inicio My Books Kanban">
-                <span class="masthead-mark" aria-hidden="true">M·B</span>
+                <span class="masthead-mark" aria-hidden="true">M·B·K</span>
                 <span class="masthead-titles">
                     <span class="masthead-title">My Books <em>Kanban</em></span>
-                    <span class="masthead-sub">A reading room &middot; ed. MMXXVI</span>
+                    <span class="masthead-sub">Bitácora de seguimiento de tus libros</span>
                 </span>
             </a>
             <button type="button" @onclick="ToggleTheme"
                     class="theme-toggle"
                     aria-label="Cambiar tema claro u oscuro">
-                <span aria-hidden="true">☙</span>
                 <span class="theme-toggle-label">Tema</span>
             </button>
         </div>
@@ -57,7 +56,6 @@
     <footer class="colophon" role="contentinfo">
         <div class="colophon-inner">
             <span class="colophon-mark">My·Books·Kanban</span>
-            <span class="colophon-text">Tus libros organizados</span>
             <span class="colophon-text">© 2024 - @CurrentYear - Desarrollo por Alejo Sarmiento.</span>
         </div>
     </footer>
@@ -96,7 +94,8 @@
 
     private void ToggleTheme()
     {
-        State.NotifyInfo("Usa el botón de tema para alternar claro/oscuro.");
+        State.NotifyInfo("Función de cambio de tema no implementada aún.");
+        @* State.ToggleTheme(); *@
     }
 
     public int CurrentYear => DateTime.Now.Year;

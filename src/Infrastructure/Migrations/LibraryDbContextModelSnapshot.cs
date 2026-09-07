@@ -64,6 +64,10 @@ namespace MyBooksKanban.Infrastructure.Migrations
                     b.Property<int>("ReadingStatus")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SpineColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("TEXT");
 

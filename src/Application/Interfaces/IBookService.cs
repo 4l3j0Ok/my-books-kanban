@@ -27,5 +27,12 @@ public interface IBookService
 
     Task MoveAsync(int bookId, ReadingStatus targetStatus, int? targetIndex, CancellationToken ct = default);
 
+    /// <summary>
+    /// Fija la página actual del libro. <paramref name="page"/> se recorta al rango
+    /// [0, total de páginas] —avanzar en la última página o retroceder en la primera
+    /// no es un error, simplemente no mueve nada—. Devuelve <c>null</c> si el libro no existe.
+    /// </summary>
+    Task<BookSummary?> UpdateProgressAsync(int bookId, int page, CancellationToken ct = default);
+
     Task UpdateCoverAsync(int bookId, string relativePath, CancellationToken ct = default);
 }

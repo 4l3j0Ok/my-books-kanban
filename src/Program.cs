@@ -28,6 +28,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddSingleton<IDominantColorExtractor, DominantColorExtractor>();
 builder.Services.AddSingleton<ICoverStorageService, CoverStorageService>();
 builder.Services.AddScoped<KanbanState>();
 
@@ -60,6 +61,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await DbSeeder.SeedAsync(db);
+
+        var covers = scope.ServiceProvider.GetRequiredService<ICoverStorageService>();
+        await SpineColorBackfill.RunAsync(db, covers, app.Logger);
     }
     catch (Exception ex)
     {

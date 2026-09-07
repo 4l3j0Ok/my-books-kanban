@@ -1,0 +1,125 @@
+- generic [ref=f8e95]:
+  - banner [ref=f8e96]:
+    - generic [ref=f8e97]:
+      - link "Inicio My Books Kanban" [ref=f8e98] [cursor=pointer]:
+        - /url: ""
+        - generic [ref=f8e99]: M·B·K
+        - generic [ref=f8e100]:
+          - generic [ref=f8e101]:
+            - text: My Books
+            - emphasis [ref=f8e102]: Kanban
+          - generic [ref=f8e103]: Bitácora de seguimiento de tus libros
+      - button "Cambiar tema claro u oscuro" [ref=f8e104] [cursor=pointer]:
+        - generic [ref=f8e105]: Tema
+    - navigation "Principal" [ref=f8e107]:
+      - list [ref=f8e108]:
+        - listitem [ref=f8e109]:
+          - link "01 Tablero" [ref=f8e110] [cursor=pointer]:
+            - /url: ""
+            - generic [ref=f8e111]: "01"
+            - generic [ref=f8e112]: Tablero
+        - listitem [ref=f8e113]:
+          - link "02 Nuevo libro" [ref=f8e114] [cursor=pointer]:
+            - /url: books/new
+            - generic [ref=f8e115]: "02"
+            - generic [ref=f8e116]: Nuevo libro
+        - listitem [ref=f8e117]:
+          - link "03 Categorías" [ref=f8e118] [cursor=pointer]:
+            - /url: categories
+            - generic [ref=f8e119]: "03"
+            - generic [ref=f8e120]: Categorías
+  - main [ref=f8e121]:
+    - region "Tu biblioteca" [ref=f8e122]:
+      - generic [ref=f8e123]:
+        - paragraph [ref=f8e124]:
+          - generic [ref=f8e126]: Tu biblioteca
+        - heading "El tablero, de un vistazo" [level=1] [ref=f8e128]
+        - paragraph [ref=f8e129]:
+          - generic [ref=f8e130]:
+            - strong [ref=f8e131]: "1"
+            - text: libros
+          - generic [ref=f8e132]: ·
+          - generic [ref=f8e133]: arrastra un lomo entre estantes para reubicarlo
+      - search "Buscar y filtrar libros" [ref=f8e134]:
+        - generic [ref=f8e135]:
+          - generic [ref=f8e136]:
+            - generic [ref=f8e137]: Buscar
+            - textbox "Buscar" [ref=f8e138]:
+              - /placeholder: Título o autor…
+          - generic [ref=f8e139]:
+            - generic [ref=f8e140]: Categoría
+            - combobox "Categoría" [ref=f8e141]:
+              - option "Todas" [selected]
+              - option "Ciencia ficción"
+              - option "Desarrollo de software"
+              - option "Desarrollo personal"
+              - option "Ensayo"
+              - option "Novela histórica"
+        - generic [ref=f8e142]:
+          - button "Aplicar" [ref=f8e143] [cursor=pointer]
+          - button "Limpiar filtros" [ref=f8e144] [cursor=pointer]: Limpiar
+      - group "Tablero Kanban de libros" [ref=f8e145]:
+        - list [ref=f8e146]:
+          - listitem [ref=f8e147]:
+            - article [ref=f8e148]:
+              - generic [ref=f8e149]:
+                - generic [ref=f8e150]: "01"
+                - generic [ref=f8e151]:
+                  - heading "Por leer" [level=2] [ref=f8e152]
+                  - paragraph [ref=f8e153]: En cola de lectura
+                - generic "0 libros en Por leer" [ref=f8e154]: "0"
+              - list [ref=f8e155]:
+                - status [ref=f8e156]:
+                  - heading "Estante vacío" [level=3] [ref=f8e157]
+                  - paragraph [ref=f8e158]: Aún no hay libros aquí.
+          - listitem [ref=f8e159]:
+            - article [ref=f8e160]:
+              - generic [ref=f8e161]:
+                - generic [ref=f8e162]: "02"
+                - generic [ref=f8e163]:
+                  - heading "Leyendo" [level=2] [ref=f8e164]
+                  - paragraph [ref=f8e165]: En curso
+                - generic "1 libros en Leyendo" [ref=f8e166]: "1"
+              - list [ref=f8e167]:
+                - listitem [active] [ref=f8e168]:
+                  - generic [ref=f8e169]:
+                    - generic "Clean Code" [ref=f8e170]
+                    - generic "Robert C. Martin" [ref=f8e171]
+          - listitem [ref=f8e172]:
+            - article [ref=f8e173]:
+              - generic [ref=f8e174]:
+                - generic [ref=f8e175]: "03"
+                - generic [ref=f8e176]:
+                  - heading "Leídos" [level=2] [ref=f8e177]
+                  - paragraph [ref=f8e178]: Terminados
+                - generic "0 libros en Leídos" [ref=f8e179]: "0"
+              - list [ref=f8e180]:
+                - status [ref=f8e181]:
+                  - heading "Estante vacío" [level=3] [ref=f8e182]
+                  - paragraph [ref=f8e183]: Aún no hay libros aquí.
+    - dialog [ref=f8e188]:
+      - complementary "Detalle del libro" [ref=f8e192]:
+        - generic [ref=f8e193]:
+          - generic [ref=f8e194]: Ficha de catálogo
+          - button "Cerrar detalle" [ref=f8e195] [cursor=pointer]: X
+        - generic [ref=f8e196]:
+          - heading "Clean Code" [level=2] [ref=f8e197]
+          - paragraph [ref=f8e198]: de Robert C. Martin
+        - generic [ref=f8e200]:
+          - figure [ref=f8e201]:
+            - img "Portada de Clean Code" [ref=f8e202]
+          - generic [ref=f8e203]:
+            - generic [ref=f8e204]:
+              - term [ref=f8e205]: Categoría
+              - definition [ref=f8e206]: Desarrollo de software
+            - generic [ref=f8e207]:
+              - term [ref=f8e208]: Estado
+              - definition [ref=f8e209]: Leyendo
+          - generic [ref=f8e210]:
+            - button "Editar" [ref=f8e211] [cursor=pointer]
+            - button "Eliminar" [ref=f8e212] [cursor=pointer]
+            - button "X" [ref=f8e213] [cursor=pointer]
+  - contentinfo [ref=f8e184]:
+    - generic [ref=f8e185]:
+      - generic [ref=f8e186]: My·Books·Kanban
+      - generic [ref=f8e187]: © 2024 - 2026 - Desarrollo por Alejo Sarmiento.

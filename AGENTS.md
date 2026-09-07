@@ -4,6 +4,7 @@
 - Blazor Web App (.NET 10) Interactive Server
 - EF Core 9 + SQLite via `IDbContextFactory<LibraryDbContext>`
 - Tailwind CSS via standalone CLI (`tools/tailwindcss`)
+- SixLabors.ImageSharp 3.1.x for cover colour analysis — pin to 3.x, v4+ requires a paid licence
 - xUnit + bUnit + SQLite temp DB per test
 
 ## Commands
@@ -22,6 +23,15 @@ docker compose up --build                          # app on :8080
 - Form models (`BookFormModel`) separate from domain entities to avoid binding entity graph
 - Migrations + seeding run at startup via `DbSeeder.SeedAsync` (which calls `db.Database.MigrateAsync`)
 - Blazor rendering mode: Interactive Server throughout
+
+### Spine colour
+- `Book.SpineColor` is **user-owned**. Choosing a cover proposes the image's dominant colour; whatever the user leaves in the field wins. `null` means "use the category colour"
+- `DominantColorExtractor` bins pixels by hue (24 bins + one achromatic bin), weights each by saturation and closeness to mid lightness, then averages the winning bin. Hue binning is deliberate: RGB-cube binning lets a flat black background beat a whole gradient (a real cover regressed to `#090d11` before this)
+- `CoverStorageService.ReadAsync` reads the picked file **once** into a `CoverUpload` (bytes + dominant colour) so the form can propose a colour immediately and `SaveAsync` writes those same bytes — no second transfer over the Blazor Server circuit
+- `SpinePalette` (pure, in `Application/Colors`) does all presentation: clamps lightness into `[0.28, 0.70]`, picks white or dark ink by WCAG contrast, and compensates for the leather texture's `multiply` blend. The DB keeps the chosen colour; only rendering normalises it
+- `BindingCloths.All` is the swatch palette; every tone sits inside the legible band so swatches render exactly as picked
+- The `.spine-face` texture lives in `app.src.css`, not in `BookSpineCard.razor.css`, so the form preview is the same object the reader sees on the shelf
+- `SpineColorBackfill.RunAsync` fills covers uploaded before the feature existed; idempotent, runs at startup after seeding
 
 ## Testing
 - `TestDbContextFactory.Create()` returns a factory pointing to a unique temp SQLite file per test

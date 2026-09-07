@@ -1,10 +1,28 @@
 /* Ficha de catálogo: el detalle se estiliza con Tailwind + tokens del proyecto. */
 
-::deep .catalogue {
+.catalogue {
   display: flex;
   flex-direction: column;
   width: 100%;
   background: var(--surface);
+  /* La ficha es el contenedor con scroll: así el fondo queda anclado a su caja
+     (background-attachment: scroll) y la portada no se mueve al desplazar. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Portada de fondo: recortada, centrada y estática. */
+.catalogue.has-cover {
+  background-color: var(--ink);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  /* Formato mínimo 9:16: la ficha toma el alto de retrato a partir de su ancho,
+     crece si el contenedor da más sitio y hace scroll si el contenido se pasa. */
+  min-height: min(40rem, calc(100dvh - 4rem));
+
 }
 
 ::deep .catalogue-empty {
@@ -111,7 +129,7 @@
 }
 
 ::deep .catalogue-cover img {
-  max-width: 12rem;
+  /* max-width: 12rem; */
   width: 100%;
   height: auto;
   border-radius: 2px;
@@ -178,18 +196,25 @@
   color: var(--brass);
 }
 
-/* Barra de progreso fina */
+/* Progreso: la etiqueta encabeza, la barra ocupa el ancho de la ficha y el
+   paginador cierra la línea a la derecha, como el sello de una ficha de préstamo. */
+::deep .catalogue-field-progress {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 ::deep .catalogue-progress {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.3rem;
-  min-width: 8rem;
+  align-items: stretch;
+  gap: 0.55rem;
+  text-align: left;
 }
 
 ::deep .catalogue-progress-track {
   display: block;
-  width: 8rem;
+  width: 100%;
   height: 4px;
   background: color-mix(in srgb, var(--ink) 12%, transparent);
   border-radius: 9999px;
@@ -204,10 +229,83 @@
   transition: width 0.3s ease;
 }
 
-::deep .catalogue-progress-num {
+/* Paginador */
+::deep .catalogue-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+::deep .catalogue-pager-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--brass);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--brass) 45%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+::deep .catalogue-pager-step:hover:not(:disabled) {
+  color: var(--surface);
+  background: var(--brass);
+  border-color: var(--brass);
+}
+
+::deep .catalogue-pager-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+::deep .catalogue-pager-figure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   color: var(--muted);
+}
+
+::deep .catalogue-pager-input {
+  width: 3.6rem;
+  padding: 0.15rem 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: right;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--shelf) 70%, transparent);
+  border-radius: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+::deep .catalogue-pager-input::-webkit-outer-spin-button,
+::deep .catalogue-pager-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+::deep .catalogue-pager-input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--brass);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::deep .catalogue-progress-bar,
+  ::deep .catalogue-pager-step {
+    transition: none;
+  }
 }
 
 /* Acciones */
@@ -223,3 +321,89 @@
 }
 
 /* Botones: sistema compartido, definido en app.src.css. */
+
+/* ---- Modo portada: contenido sobre la imagen, cada sección en su tarjeta ---- */
+
+/* La tarjeta reintroduce la paleta clara localmente, así el texto y los
+   controles heredados (botones, formulario) siguen siendo legibles en dark. */
+::deep .catalogue-panel {
+  --surface: #f5f1e8;
+  --surface-2: #e8e0d4;
+  --shelf: #d4c5a9;
+  --ink: #241d10;
+  --muted: #5b5241;
+  --brass: #8a6122;
+  --brass-strong: #6d4a18;
+  /* --surface sigue siendo opaco para los hijos (inputs, hovers). */
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.85);
+}
+
+/* El vidrio esmerilado es una capa propia detrás del contenido: el desenfoque
+   y la transparencia afectan sólo al fondo, nunca al texto. */
+::deep .catalogue-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: color-mix(in srgb, #f5f1e8 82%, transparent);
+  backdrop-filter: blur(50px) saturate(115%);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  ::deep .catalogue-panel::before {
+    background: color-mix(in srgb, #f5f1e8 94%, transparent);
+  }
+}
+
+
+.has-cover ::deep .catalogue-title-block {
+  margin: 0 1.25rem 0.35rem;
+  padding: 0.95rem 1.1rem;
+}
+
+.has-cover ::deep .catalogue-fields {
+  padding: 0.25rem 1.1rem;
+}
+
+/* Las acciones cierran la ficha: pegadas al fondo del retrato. */
+.has-cover ::deep .catalogue-body {
+  flex: 1 1 auto;
+}
+
+.has-cover ::deep .catalogue-actions {
+  margin-top: auto;
+  padding: 0.8rem 1.1rem;
+}
+
+/* Cabecera y regla viven sobre la imagen: tinta clara, no la del tema. */
+.has-cover ::deep .catalogue-eyebrow {
+  color: #eac97f;
+}
+
+.has-cover ::deep .catalogue-close {
+  color: rgba(255, 255, 255, 0.82);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.has-cover ::deep .catalogue-close:hover {
+  color: #fff;
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.has-cover ::deep .catalogue-rule::before {
+  background: #eac97f;
+}
+
+.has-cover ::deep .catalogue-rule::after {
+  background: rgba(255, 255, 255, 0.45);
+}

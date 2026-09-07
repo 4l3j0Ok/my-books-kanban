@@ -1,6 +1,7 @@
 using Bunit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.DependencyInjection;
 using MyBooksKanban.Application.Interfaces;
 using MyBooksKanban.Application.Models;
 using MyBooksKanban.Components.Books;
@@ -17,6 +18,11 @@ public class BookFormTests : TestContext
         new CategoryListItem(1, "Ensayo", 0),
         new CategoryListItem(2, "Ciencia ficción", 0)
     };
+
+    public BookFormTests()
+    {
+        Services.AddSingleton<ICoverStorageService>(new FakeCoverStorageService());
+    }
 
     [Fact]
     public void Renders_required_field_errors_when_empty()

@@ -83,6 +83,7 @@ public class BookService : IBookService
         book.Author = model.Author.Trim();
         book.Description = model.Description;
         book.CoverPath = model.CoverPath;
+        book.SpineColor = model.SpineColor;
         book.ReadingStatus = model.ReadingStatus;
         book.CategoryId = model.CategoryId;
         book.PageCount = model.PageCount;
@@ -184,6 +185,26 @@ public class BookService : IBookService
             bookId, origin, targetStatus, insertAt);
     }
 
+    public async Task<BookSummary?> UpdateProgressAsync(int bookId, int page, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var book = await db.Books
+            .Include(b => b.Category)
+            .FirstOrDefaultAsync(b => b.Id == bookId, ct);
+        if (book is null) return null;
+
+        // El tope real es el total del libro; sin total, el límite de validación.
+        var target = Math.Clamp(page, 0, book.PageCount ?? BookFormModel.MaxTrackablePage);
+        if (book.CurrentPage == target) return ToSummary(book);
+
+        book.CurrentPage = target;
+        book.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+        _logger.LogInformation("Progreso actualizado: Id={Id} página {Page}", bookId, target);
+
+        return ToSummary(book);
+    }
+
     public async Task UpdateCoverAsync(int bookId, string relativePath, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
@@ -216,7 +237,7 @@ public class BookService : IBookService
     }
 
     private static BookSummary ToSummary(Book b) =>
-        new(b.Id, b.Title, b.Author, b.CoverPath, b.ReadingStatus, b.Position,
+        new(b.Id, b.Title, b.Author, b.CoverPath, b.SpineColor, b.ReadingStatus, b.Position,
             b.CurrentPage, b.PageCount, b.Rating, b.Category?.Name ?? string.Empty);
 
     private static BookFormModel ToFormModel(Book b) => new()
@@ -226,6 +247,7 @@ public class BookService : IBookService
         Author = b.Author,
         Description = b.Description,
         CoverPath = b.CoverPath,
+        SpineColor = b.SpineColor,
         ReadingStatus = b.ReadingStatus,
         CategoryId = b.CategoryId,
         PageCount = b.PageCount,
@@ -242,6 +264,7 @@ public class BookService : IBookService
         Author = m.Author.Trim(),
         Description = m.Description,
         CoverPath = m.CoverPath,
+        SpineColor = m.SpineColor,
         ReadingStatus = m.ReadingStatus,
         CategoryId = m.CategoryId,
         PageCount = m.PageCount,

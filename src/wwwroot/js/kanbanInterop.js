@@ -60,6 +60,84 @@ export function scrollToTop() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+const BOOK_DETAIL_TRANSITION = "selected-book-detail";
+
+function getBookSpine(bookId) {
+  return document.querySelector(`[data-book-id="${CSS.escape(String(bookId))}"]`);
+}
+
+export function openBookDetailWithTransition(bookId) {
+  if (!document.startViewTransition) return false;
+
+  const spine = getBookSpine(bookId);
+  const drawer = document.querySelector(".drawer");
+  const panel = document.querySelector(".drawer-panel");
+  if (!spine || !drawer || !panel) return false;
+
+  spine.style.viewTransitionName = BOOK_DETAIL_TRANSITION;
+  spine.style.contain = "layout";
+
+  const transition = document.startViewTransition(() => {
+    spine.style.viewTransitionName = "none";
+    drawer.classList.remove("is-closed");
+    drawer.classList.add("is-open");
+    drawer.setAttribute("aria-hidden", "false");
+    panel.style.viewTransitionName = BOOK_DETAIL_TRANSITION;
+    panel.style.contain = "layout";
+    panel.classList.add("animate__animated", "animate__flipInY");
+  });
+
+  transition.finished
+    .finally(() => {
+      spine.style.viewTransitionName = "";
+      spine.style.contain = "";
+      panel.style.viewTransitionName = "";
+      panel.style.contain = "";
+    })
+    .catch(() => {});
+
+  return true;
+}
+
+export function closeBookDetailWithTransition(bookId) {
+  if (!document.startViewTransition) return false;
+
+  const drawer = document.querySelector(".drawer.is-open");
+  const panel = document.querySelector(".drawer-panel");
+  if (!drawer || !panel) return false;
+
+  panel.style.viewTransitionName = BOOK_DETAIL_TRANSITION;
+  panel.style.contain = "layout";
+
+  let spine = null;
+  const transition = document.startViewTransition(() => {
+    panel.style.viewTransitionName = "none";
+    drawer.classList.remove("is-open");
+    drawer.classList.add("is-closed");
+    drawer.setAttribute("aria-hidden", "true");
+    panel.classList.remove("animate__animated", "animate__flipInY");
+    spine = getBookSpine(bookId);
+
+    if (spine) {
+      spine.style.viewTransitionName = BOOK_DETAIL_TRANSITION;
+      spine.style.contain = "layout";
+    }
+  });
+
+  transition.finished
+    .finally(() => {
+      if (spine) {
+        spine.style.viewTransitionName = "";
+        spine.style.contain = "";
+      }
+      panel.style.viewTransitionName = "";
+      panel.style.contain = "";
+    })
+    .catch(() => {});
+
+  return true;
+}
+
 // Devuelve el índice de inserción dentro de `container` para un punto Y
 // (clientY del puntero). El contenedor expone hijos con el atributo
 // `data-book-id` en orden; el índice retornado es 0..N (N = append al final).

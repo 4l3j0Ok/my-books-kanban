@@ -1,11 +1,13 @@
+@using MyBooksKanban.Application.Colors
 @{
-    var colorVar = GetCategoryColor(Book.CategoryName);
-    var spineWidth = GetSpineWidth(Book.PageCount);
+    // Si el libro tiene portada, el lomo hereda su color dominante; si no, se
+    // deriva un color estable del nombre de la categoría.
+    var (accent, ink, inkHalo) = SpinePalette.Resolve(Book.SpineColor, Book.CategoryName);
     var stateClass = IsDragging ? "is-dragging" : null;
 }
 
-<article class="@($"spine-card {stateClass}") flex items-stretch overflow-hidden rounded-sm cursor-grab select-none"
-         style="--spine-accent: @colorVar;"
+<article class="@($"spine-card {stateClass}") flex items-stretch overflow-hidden rounded-lg cursor-grab select-none"
+         style="--spine-accent: @accent; --spine-ink: @ink; --spine-ink-halo: @inkHalo;"
          role="listitem"
          tabindex="0"
          data-book-id="@Book.Id"
@@ -14,16 +16,13 @@
          @onkeydown="HandleKey"
          @ondragstart="HandleDragStart"
          @ondragend="HandleDragEnd">
-    <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5 border-l-[3px] border-black/20 bg-[--spine-accent] px-3 py-2 text-left text-white">
-        <span class="truncate font-display text-sm font-semibold leading-tight tracking-tight" title="@Book.Title">@Book.Title</span>
-        <span class="truncate font-body text-2xs leading-snug opacity-80" title="@Book.Author">@Book.Author</span>
+    <div class="spine-face relative isolate flex min-w-0 flex-1 flex-col justify-center gap-0.5 border-l-[3px] border-black/20 bg-[--spine-accent] px-3 py-2 text-left text-[--spine-ink]">
+        <span class="relative z-10 truncate font-display text-sm font-semibold leading-tight tracking-tight" title="@Book.Title">@Book.Title</span>
+        <span class="relative z-10 truncate font-body text-2xs leading-snug opacity-80" title="@Book.Author">@Book.Author</span>
         @if (Book.Rating is { } rating)
         {
-            <span class="font-mono text-2xs tracking-wider opacity-70" aria-label="@($"Calificación {rating} de 5")">
-                @for (var i = 0; i < 5; i++)
-                {
-                    <span aria-hidden="true">@(i < rating ? "★" : "☆")</span>
-                }
+            <span class="relative z-10 font-mono text-2xs tracking-wider opacity-70" aria-label="@($"Calificación {rating} de 5")">
+                @rating/5
             </span>
         }
     </div>
@@ -51,24 +50,4 @@
 
     private Task HandleDragStart(DragEventArgs e) => OnDragStart.InvokeAsync(Book.Id);
     private Task HandleDragEnd(DragEventArgs e) => OnDragEnd.InvokeAsync();
-
-    private static string GetCategoryColor(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "#8a7050";
-        var hash = 0;
-        foreach (var ch in name) hash = (hash * 31 + ch) & 0xFFFFFF;
-        var hue = hash % 360;
-        return $"hsl({hue}, 38%, 42%)";
-    }
-
-    private static int GetSpineWidth(int? pageCount)
-    {
-        return pageCount switch
-        {
-            <= 150 => 0,
-            <= 300 => 1,
-            <= 500 => 2,
-            _ => 3
-        };
-    }
 }

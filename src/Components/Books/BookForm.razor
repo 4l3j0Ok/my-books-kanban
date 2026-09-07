@@ -1,14 +1,22 @@
 @* Formulario de alta/edición. *@
+@using MyBooksKanban.Application.Colors
+@inject ICoverStorageService CoverStorage
 
 <EditForm Model="Model" OnValidSubmit="HandleSubmit" novalidate>
     <DataAnnotationsValidator />
-    <ValidationSummary class="mb-3 rounded-sm border border-[var(--danger)]/50 bg-[var(--danger)]/5 p-3 font-body text-xs text-[var(--danger)]" role="alert" />
+    <ValidationSummary
+    class="mb-3 rounded-sm border border-[var(--danger)]/50 bg-[var(--danger)]/5 p-3 font-body text-xs text-[var(--danger)]"
+    role="alert" />
 
     @if (BusinessErrors.Count > 0)
     {
-        <div class="mb-3 rounded-sm border border-[var(--danger)]/50 bg-[var(--danger)]/5 p-3 font-body text-xs text-[var(--danger)]" role="alert" aria-live="polite">
+        <div class="mb-3 rounded-sm border border-[var(--danger)]/50 bg-[var(--danger)]/5 p-3 font-body text-xs text-[var(--danger)]"
+             role="alert" aria-live="polite">
             <ul class="m-0 list-inside list-disc ps-3">
-                @foreach (var err in BusinessErrors) { <li>@err</li> }
+                @foreach (var err in BusinessErrors)
+                {
+                    <li>@err</li>
+                }
             </ul>
         </div>
     }
@@ -16,95 +24,200 @@
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div>
             <label for="bk-title" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Título</label>
-            <InputText id="bk-title" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.Title" />
+            <InputText id="bk-title"
+                       class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                       @bind-Value="Model.Title" />
             <ValidationMessage For="() => Model.Title" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
         </div>
 
         <div>
             <label for="bk-author" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Autor</label>
-            <InputText id="bk-author" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.Author" />
+            <InputText id="bk-author"
+                       class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                       @bind-Value="Model.Author" />
             <ValidationMessage For="() => Model.Author" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
         </div>
 
         <div>
-            <label for="bk-category" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Categoría</label>
-            <InputSelect id="bk-category" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.CategoryId">
-                <option value="0">— Selecciona —</option>
+            <label for="bk-category"
+                   class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Categoría</label>
+            <InputSelect id="bk-category"
+                         class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                         @bind-Value="Model.CategoryId">
+                <option value="0">Selecciona una opción...</option>
                 @foreach (var c in Categories)
                 {
                     <option value="@c.Id">@c.Name</option>
                 }
             </InputSelect>
-            <ValidationMessage For="() => Model.CategoryId" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+            <ValidationMessage For="() => Model.CategoryId"
+                               class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
         </div>
 
         <div>
-            <label for="bk-status" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Estado de lectura</label>
-            <InputSelect id="bk-status" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.ReadingStatus">
-                <option value="@ReadingStatus.ToRead">Por leer</option>
-                <option value="@ReadingStatus.Reading">Leyendo</option>
-                <option value="@ReadingStatus.Read">Leído</option>
-            </InputSelect>
-            <ValidationMessage For="() => Model.ReadingStatus" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
-        </div>
+            <label for="bk-status" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Estado de
+                lectura</label>
+                <InputSelect id="bk-status"
+                             class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                             @bind-Value="Model.ReadingStatus">
+                    <option value="@ReadingStatus.ToRead">Por leer</option>
+                    <option value="@ReadingStatus.Reading">Leyendo</option>
+                    <option value="@ReadingStatus.Read">Leído</option>
+                </InputSelect>
+                <ValidationMessage For="() => Model.ReadingStatus"
+                                   class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+            </div>
 
-        <div>
-            <label for="bk-pages" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Total de páginas</label>
-            <InputNumber id="bk-pages" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.PageCount" />
-            <ValidationMessage For="() => Model.PageCount" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
-        </div>
+            <div>
+                <label for="bk-pages" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Total de
+                    páginas</label>
+                    <InputNumber id="bk-pages"
+                                 class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                 @bind-Value="Model.PageCount" />
+                    <ValidationMessage For="() => Model.PageCount" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+                </div>
 
-        <div>
-            <label for="bk-current" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Página actual</label>
-            <InputNumber id="bk-current" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.CurrentPage" />
-            <ValidationMessage For="() => Model.CurrentPage" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
-        </div>
+                <div>
+                    <label for="bk-current" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Página
+                        actual</label>
+                        <InputNumber id="bk-current"
+                                     class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                     @bind-Value="Model.CurrentPage" />
+                        <ValidationMessage For="() => Model.CurrentPage"
+                                           class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+                    </div>
 
-        <div>
-            <label for="bk-rating" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Calificación (1-5)</label>
-            <InputSelect id="bk-rating" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="RatingProxy">
-                <option value="">Sin calificar</option>
-                @for (var i = 1; i <= 5; i++) { <option value="@i">@i ★</option> }
-            </InputSelect>
-            <ValidationMessage For="() => Model.Rating" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
-        </div>
+                    <div>
+                        <label for="bk-rating" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Calificación
+                            (1-5)</label>
+                            <InputSelect id="bk-rating"
+                                         class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                         @bind-Value="RatingProxy">
+                                <option value="">Sin calificar</option>
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    string stars = "estrella";
+                                    if (i > 1) stars += "s";
+                                    <option value="@i">@string.Concat(Enumerable.Repeat("★", i)) (@i @stars)</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Model.Rating" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+                        </div>
 
-        <div>
-            <label for="bk-isbn" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">ISBN</label>
-            <InputText id="bk-isbn" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.Isbn" />
-            <ValidationMessage For="() => Model.Isbn" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
-        </div>
+                        <div>
+                            <label for="bk-isbn" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">ISBN</label>
+                            <InputText id="bk-isbn"
+                                       class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                       @bind-Value="Model.Isbn" />
+                            <ValidationMessage For="() => Model.Isbn" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+                        </div>
 
-        <div>
-            <label for="bk-started" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Inicio</label>
-            <InputDate id="bk-started" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.StartedAt" />
-        </div>
-        <div>
-            <label for="bk-finished" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Fin</label>
-            <InputDate id="bk-finished" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" @bind-Value="Model.FinishedAt" />
-        </div>
+                        <div>
+                            <label for="bk-started" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Inicio</label>
+                            <InputDate id="bk-started"
+                                       class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                       @bind-Value="Model.StartedAt" />
+                        </div>
+                        <div>
+                            <label for="bk-finished" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Fin</label>
+                            <InputDate id="bk-finished"
+                                       class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-mono text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                       @bind-Value="Model.FinishedAt" />
+                        </div>
 
-        <div class="md:col-span-2">
-            <label for="bk-description" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Descripción</label>
-            <InputTextArea id="bk-description" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]" rows="3" @bind-Value="Model.Description" />
-            <ValidationMessage For="() => Model.Description" class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
-        </div>
+                        <div class="md:col-span-2">
+                            <label for="bk-description"
+                                   class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Descripción</label>
+                            <InputTextArea id="bk-description"
+                                           class="w-full rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] px-3 py-2 font-body text-sm text-[var(--ink)] placeholder:text-[var(--muted)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--brass)]"
+                                           rows="3" @bind-Value="Model.Description" />
+                            <ValidationMessage For="() => Model.Description"
+                                               class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+                        </div>
 
-        <div class="md:col-span-2">
-            <label for="bk-cover" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Portada (opcional)</label>
-            <InputFile id="bk-cover" class="w-full rounded-sm border border-[var(--shelf)]/30 bg-transparent px-3 py-2 font-body text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-[var(--brass)] file:px-3 file:py-1 file:font-body file:text-xs file:font-semibold file:text-white" OnChange="HandleCoverSelected" accept="image/png,image/jpeg,image/webp" />
-            @if (!string.IsNullOrEmpty(Model.CoverPath))
-            {
-                <small class="mt-1 block font-mono text-2xs text-[var(--muted)]">Portada actual: @Model.CoverPath</small>
-            }
-        </div>
-    </div>
+                        <div class="md:col-span-2">
+                            <label for="bk-cover" class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Portada
+                                (opcional)</label>
+                                <InputFile id="bk-cover"
+                                           class="w-full rounded-sm border border-[var(--shelf)]/30 bg-transparent px-3 py-2 font-body text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-[var(--brass)] file:px-3 file:py-1 file:font-body file:text-xs file:font-semibold file:text-white"
+                                           OnChange="HandleCoverSelected" accept="image/png,image/jpeg,image/webp" />
+                                @if (Model.CoverUpload is not null)
+                                {
+                                    <small class="mt-1 block font-mono text-2xs text-[var(--muted)]">Nueva portada: @Model.CoverUpload.FileName</small>
+                                }
+                                else if (!string.IsNullOrEmpty(Model.CoverPath))
+                                {
+                                    <small class="mt-1 block font-mono text-2xs text-[var(--muted)]">Portada actual: @Model.CoverPath</small>
+                                }
+                            </div>
 
-    <div class="mt-5 flex flex-wrap gap-2">
-        <button type="submit" class="inline-flex items-center justify-center rounded-sm bg-[var(--brass)] px-4 py-2 font-body text-sm font-semibold text-white hover:bg-[var(--brass-strong)]">Guardar</button>
-        <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 px-4 py-2 font-body text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]" @onclick="() => OnCancel.InvokeAsync()">Cancelar</button>
-    </div>
-</EditForm>
+                        <fieldset class="md:col-span-2">
+                            <legend class="mb-1 block font-body text-xs font-medium text-[var(--muted)]">Color del lomo</legend>
+
+                            <div class="rounded-sm border border-[var(--shelf)]/30 bg-[var(--page)] p-3">
+                                @* Lo que se ve aquí es el mismo lomo que irá al estante. *@
+                                <div class="overflow-hidden rounded-lg shadow-[0_1px_3px_rgba(44,36,22,0.08)]"
+                                     style="--spine-accent: @Preview.Accent; --spine-ink: @Preview.Ink; --spine-ink-halo: @Preview.InkHalo;">
+                                    <div class="spine-face relative isolate flex min-w-0 flex-col justify-center gap-0.5 border-l-[3px] border-black/20 bg-[--spine-accent] px-3 py-2 text-left text-[--spine-ink]">
+                                        <span class="relative z-10 truncate font-display text-sm font-semibold leading-tight tracking-tight">@PreviewTitle</span>
+                                        <span class="relative z-10 truncate font-body text-2xs leading-snug opacity-80">@PreviewAuthor</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 flex flex-wrap items-center gap-1.5" role="group"
+                                     aria-label="Telas de encuadernación">
+                                    @foreach (var cloth in BindingCloths.All)
+                                    {
+                                        <button type="button"
+                                                class="@SwatchClass(cloth.Hex)"
+                                                style="background-color: @cloth.Hex"
+                                                title="@cloth.Name"
+                                                aria-label="@cloth.Name"
+                                                aria-pressed="@IsChosen(cloth.Hex).ToString().ToLowerInvariant()"
+                                                @onclick="() => ChooseColor(cloth.Hex)"></button>
+                                    }
+
+                                    <span class="mx-0.5 h-5 w-px bg-[var(--shelf)]/50" aria-hidden="true"></span>
+
+                                    <label class="@CustomSwatchClass cloth-any relative cursor-pointer"
+                                           title="Cualquier otro color">
+                                        <span class="sr-only">Cualquier otro color</span>
+                                        <input type="color" class="cloth-picker" value="@Preview.Accent"
+                                               @onchange="OnCustomColorChanged" />
+                                    </label>
+                                </div>
+
+                                <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                    <p class="m-0 font-mono text-2xs text-[var(--muted)]">@ColorHint</p>
+
+                                    @if (CanUseCoverColor)
+                                    {
+                                        <button type="button"
+                                                class="font-body text-2xs font-semibold text-[var(--brass-strong)] underline underline-offset-2 hover:text-[var(--brass)]"
+                                                @onclick="UseCoverColor">Usar el color de la portada</button>
+                                    }
+
+                                    @if (Model.SpineColor is not null)
+                                    {
+                                        <button type="button"
+                                                class="font-body text-2xs font-semibold text-[var(--muted)] underline underline-offset-2 hover:text-[var(--ink)]"
+                                                @onclick="UseCategoryColor">Volver al de la categoría</button>
+                                    }
+                                </div>
+                            </div>
+                            <ValidationMessage For="() => Model.SpineColor"
+                                               class="mt-1 block font-mono text-2xs text-[var(--danger)]" />
+                        </fieldset>
+                        </div>
+
+                        <div class="mt-5 flex flex-wrap gap-2">
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center rounded-sm bg-[var(--brass)] px-4 py-2 font-body text-sm font-semibold text-white hover:bg-[var(--brass-strong)]">Guardar</button>
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 px-4 py-2 font-body text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]"
+                                    @onclick="() => OnCancel.InvokeAsync()">Cancelar</button>
+                        </div>
+                    </EditForm>
 
 @code {
     [Parameter, EditorRequired] public BookFormModel Model { get; set; } = new();
@@ -125,9 +238,96 @@
         }
     }
 
-    private void HandleCoverSelected(InputFileChangeEventArgs e)
+    private (string Accent, string Ink, string InkHalo) Preview =>
+        SpinePalette.Resolve(Model.SpineColor, CategoryName);
+
+    private string PreviewTitle =>
+        string.IsNullOrWhiteSpace(Model.Title) ? "Título del libro" : Model.Title;
+
+    private string PreviewAuthor =>
+        string.IsNullOrWhiteSpace(Model.Author) ? "Autor" : Model.Author;
+
+    private string CategoryName =>
+        Categories.FirstOrDefault(c => c.Id == Model.CategoryId)?.Name ?? string.Empty;
+
+    /// <summary>Color dominante de la portada en juego, sea la recién elegida o la ya guardada.</summary>
+    private string? CoverColor => Model.CoverUpload?.DominantColor ?? _storedCoverColor;
+
+    private bool CanUseCoverColor =>
+        CoverColor is not null && !string.Equals(CoverColor, Model.SpineColor, StringComparison.OrdinalIgnoreCase);
+
+    private string ColorHint => Model.SpineColor is null
+        ? "Sin color propio: el lomo usa el de la categoría."
+        : string.Equals(Model.SpineColor, CoverColor, StringComparison.OrdinalIgnoreCase)
+            ? $"Tomado de la portada · {Model.SpineColor}"
+            : $"Elegido a mano · {Model.SpineColor}";
+
+    /// <summary>Hay color, pero no es ninguna de las telas: lo eligió del selector libre.</summary>
+    private bool IsCustomChosen =>
+        Model.SpineColor is not null &&
+        !BindingCloths.All.Any(c => string.Equals(c.Hex, Model.SpineColor, StringComparison.OrdinalIgnoreCase));
+
+    private string CustomSwatchClass => IsCustomChosen
+        ? $"{SwatchBase} border-[var(--ink)] ring-1 ring-[var(--ink)] ring-offset-1 ring-offset-[var(--page)]"
+        : $"{SwatchBase} border-black/15 hover:scale-110";
+
+    private string? _storedCoverColor;
+    private string? _coverColorSource;
+    private bool _coverColorResolved;
+
+    protected override async Task OnParametersSetAsync()
     {
-        Model.CoverFile = e.File;
+        // El color de una portada ya guardada sólo se recalcula cuando cambia
+        // la ruta, para no releer la imagen en cada render.
+        if (_coverColorResolved && _coverColorSource == Model.CoverPath) return;
+
+        _coverColorResolved = true;
+        _coverColorSource = Model.CoverPath;
+        _storedCoverColor = await CoverStorage.GetDominantColorAsync(Model.CoverPath);
+    }
+
+    private bool IsChosen(string hex) =>
+        string.Equals(Model.SpineColor, hex, StringComparison.OrdinalIgnoreCase);
+
+    private const string SwatchBase =
+        "h-7 w-7 rounded-sm border transition-transform focus:outline-none focus:ring-1 focus:ring-[var(--brass)] focus:ring-offset-1";
+
+    private string SwatchClass(string hex) => IsChosen(hex)
+        ? $"{SwatchBase} border-[var(--ink)] ring-1 ring-[var(--ink)] ring-offset-1 ring-offset-[var(--page)]"
+        : $"{SwatchBase} border-black/15 hover:scale-110";
+
+    private void ChooseColor(string hex) => Model.SpineColor = hex;
+
+    private void OnCustomColorChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (SpinePalette.TryParseHex(value, out var rgb))
+            Model.SpineColor = SpinePalette.ToHex(rgb.R, rgb.G, rgb.B);
+    }
+
+    private void UseCoverColor() => Model.SpineColor = CoverColor;
+
+    private void UseCategoryColor() => Model.SpineColor = null;
+
+    private async Task HandleCoverSelected(InputFileChangeEventArgs e)
+    {
+        BusinessErrors.Clear();
+
+        try
+        {
+            // Se lee una sola vez: el color se propone ya, y al guardar se
+            // escriben estos mismos bytes sin volver a transferir la imagen.
+            var upload = await CoverStorage.ReadAsync(e.File);
+            Model.CoverUpload = upload;
+
+            if (upload.DominantColor is not null)
+                Model.SpineColor = upload.DominantColor;
+        }
+        catch (MyBooksKanban.Application.Services.ValidationException ex)
+        {
+            Model.CoverUpload = null;
+            BusinessErrors.Add(ex.Message);
+        }
     }
 
     private async Task HandleSubmit()

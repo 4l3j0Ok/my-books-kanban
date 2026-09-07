@@ -26,6 +26,15 @@ public class Book
     [StringLength(300)]
     public string? CoverPath { get; set; }
 
+    /// <summary>
+    /// Color del lomo en hexadecimal (<c>#RRGGBB</c>). Se propone al elegir portada,
+    /// tomando el color dominante de la imagen, y el usuario puede cambiarlo: lo que
+    /// quede aquí manda. Es <c>null</c> mientras nadie lo haya fijado, y entonces la
+    /// UI recurre al color derivado de la categoría.
+    /// </summary>
+    [StringLength(7)]
+    public string? SpineColor { get; set; }
+
     public ReadingStatus ReadingStatus { get; set; } = ReadingStatus.ToRead;
 
     /// <summary>Posición ordinal dentro de la columna (orden estable).</summary>

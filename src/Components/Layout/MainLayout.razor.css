@@ -218,11 +218,6 @@
   text-transform: none;
 }
 
-::deep .colophon-text {
-  flex: 1 1 auto;
-  text-align: center;
-  min-width: 12rem;
-}
 
 ::deep .colophon-edition {
   font-weight: 500;
@@ -236,5 +231,4 @@
   ::deep .masthead-mark   { width: 2.1rem; height: 2.1rem; font-size: 0.75rem; }
   ::deep .theme-toggle-label { display: none; }
   ::deep .colophon-inner  { padding: 0.7rem 1rem; font-size: 0.6rem; }
-  ::deep .colophon-text   { order: 3; flex-basis: 100%; text-align: left; }
 }
