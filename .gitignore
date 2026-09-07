@@ -37,3 +37,4 @@ src/wwwroot/uploads/covers/.gitkeep
 # OS
 .DS_Store
 Thumbs.db
+.playwright-mcp/
