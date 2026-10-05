@@ -1,6 +1,7 @@
 @* Panel de detalle con apariencia de ficha de catálogo. *@
+@using MyBooksKanban.Application.Colors
 
-<article class="catalogue @(HasCover ? "has-cover" : null)" style="@CoverStyle"
+<article class="catalogue @(HasCover ? "has-cover" : null)" style="@ArticleStyle"
          role="complementary" aria-label="Detalle del libro" id="@($"book-detail-{Book?.Id}")">
     @if (Book is null)
     {
@@ -47,8 +48,44 @@
                     </div>
                     <div class="catalogue-field">
                         <dt>Estado</dt>
-                        <dd>@StatusLabel(Book.Status)</dd>
+                        <dd>
+                            <select class="catalogue-select" aria-label="Estado de lectura"
+                                    value="@Book.Status" @onchange="ChangeStatus">
+                                @foreach (var status in Enum.GetValues<ReadingStatus>())
+                                {
+                                    <option value="@status" selected="@(status == Book.Status)">@StatusLabel(status)</option>
+                                }
+                            </select>
+                        </dd>
                     </div>
+                    @if (Book.PageCount is { } totalPages)
+                    {
+                        <div class="catalogue-field">
+                            <dt>Páginas</dt>
+                            <dd>@totalPages</dd>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Book.Isbn))
+                    {
+                        <div class="catalogue-field">
+                            <dt>ISBN</dt>
+                            <dd class="catalogue-mono">@Book.Isbn</dd>
+                        </div>
+                    }
+                    @if (Book.StartedAt is { } started)
+                    {
+                        <div class="catalogue-field">
+                            <dt>Inicio</dt>
+                            <dd>@started.ToString("dd/MM/yyyy")</dd>
+                        </div>
+                    }
+                    @if (Book.FinishedAt is { } finished)
+                    {
+                        <div class="catalogue-field">
+                            <dt>Fin</dt>
+                            <dd>@finished.ToString("dd/MM/yyyy")</dd>
+                        </div>
+                    }
                     <div class="catalogue-field catalogue-field-progress">
                         <dt>Progreso</dt>
                         <dd class="catalogue-progress">
@@ -77,6 +114,11 @@
                                         aria-label="Avanzar una página" disabled="@(!CanAdvance)"
                                         @onclick="() => StepPage(1)">+</button>
                             </div>
+                            @if (Book.Status != ReadingStatus.Read)
+                            {
+                                <button type="button" class="btn btn-primary catalogue-complete"
+                                        @onclick="AskComplete">Marcar como completado</button>
+                            }
                         </dd>
                     </div>
                     @if (Book.Rating is { } rating)
@@ -92,6 +134,13 @@
                             </dd>
                         </div>
                     }
+                    @if (!string.IsNullOrWhiteSpace(Book.Description))
+                    {
+                        <div class="catalogue-field catalogue-field-stacked">
+                            <dt>Descripción</dt>
+                            <dd class="catalogue-description">@Book.Description</dd>
+                        </div>
+                    }
                 </dl>
 
                 <div class="catalogue-actions @PanelClass">
@@ -102,6 +151,7 @@
             }
         </div>
     }
+    <ConfirmDialog @ref="_confirm" />
 </article>
 
 @code {
@@ -116,7 +166,40 @@
     /// <summary>Página absoluta elegida por el lector. El padre persiste y devuelve el libro.</summary>
     [Parameter] public EventCallback<int> OnProgressChange { get; set; }
 
+    /// <summary>Estado elegido en el selector. El padre persiste y devuelve el libro.</summary>
+    [Parameter] public EventCallback<ReadingStatus> OnStatusChange { get; set; }
+
+    /// <summary>El lector confirmó que terminó el libro. El padre persiste y recarga.</summary>
+    [Parameter] public EventCallback OnComplete { get; set; }
+
+    private ConfirmDialog? _confirm;
+
+    private void AskComplete() =>
+        _confirm?.Show(
+            "Marcar como completado",
+            "Se completarán todas las páginas, el libro pasará a «Leído» y se registrará la fecha de fin. ¿Continuar?",
+            "Completar", "Cancelar",
+            () => OnComplete.InvokeAsync(),
+            destructive: false);
+
     private bool Editing { get; set; }
+
+    private string ArticleStyle => (AccentStyle ?? string.Empty) + (CoverStyle ?? string.Empty);
+
+    private string? AccentStyle
+    {
+        get
+        {
+            if (Book is null) return null;
+            var (onLight, strong, onDark) = SpinePalette.AccentsFor(Book.SpineColor, Book.CategoryName);
+            return $"--accent-light: {onLight}; --accent-light-strong: {strong}; --accent-dark: {onDark}; ";
+        }
+    }
+
+    private Task ChangeStatus(ChangeEventArgs e) =>
+        Enum.TryParse<ReadingStatus>(e.Value?.ToString(), out var status) && status != Book?.Status
+            ? OnStatusChange.InvokeAsync(status)
+            : Task.CompletedTask;
 
     private int _pageInputEpoch;
 

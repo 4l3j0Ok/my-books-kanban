@@ -383,20 +383,33 @@
     border-radius: 0.75rem;
     box-shadow: 0 24px 70px -24px rgba(0, 0, 0, 0.45);
     opacity: 0;
-    --animate-duration: 1s;
     backface-visibility: visible;
     /* El scroll vive en .catalogue para que su fondo quede fijo a la tarjeta. */
     overflow: hidden;
   }
 
+  @keyframes drawer-panel-turn {
+    from {
+      opacity: 0;
+      transform: perspective(1000px) rotateY(-62deg) scale(0.94);
+      transform-origin: center;
+    }
+    to {
+      opacity: 1;
+      transform: perspective(1000px) rotateY(0) scale(1);
+      transform-origin: center;
+    }
+  }
+
+  .drawer-panel-turn {
+    animation: drawer-panel-turn .5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+  }
+
   .drawer.is-open .drawer-panel {
     opacity: 1;
     contain: layout;
-  }
-
-  ::view-transition-old(selected-book-detail),
-  ::view-transition-new(selected-book-detail) {
-    animation-duration: 1s;
   }
 
   .drawer-handle {
@@ -426,6 +439,10 @@
 
     .drawer-panel {
       animation-duration: 0.01ms;
+    }
+
+    .drawer-panel-turn {
+      animation: none;
     }
   }
 
@@ -524,6 +541,15 @@
 
   .page-body {
     width: 100%;
+  }
+
+  .page-centered {
+    max-width: 80%;
+    margin-inline: auto;
+  }
+
+  @media (max-width: 767px) {
+    .page-centered { max-width: 90%; }
   }
 
   .page-body-narrow {

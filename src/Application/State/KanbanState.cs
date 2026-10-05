@@ -17,7 +17,16 @@ public class KanbanState
     public string? Notification { get; private set; }
     public NotificationKind NotificationKind { get; private set; } = NotificationKind.Info;
 
+    public CreateTarget? ActiveCreate { get; private set; }
+
     public event Action? Changed;
+
+    /// <summary>Se dispara cuando un alta externa a la página (modal) modificó datos.</summary>
+    public event Action? DataChanged;
+
+    public void OpenCreate(CreateTarget target) { ActiveCreate = target; Notify(); }
+    public void CloseCreate() { ActiveCreate = null; Notify(); }
+    public void NotifyDataChanged() => DataChanged?.Invoke();
 
     public void SetSearch(string? term) { SearchTerm = term; Notify(); }
     public void SetCategory(int? id) { CategoryId = id; Notify(); }
@@ -38,3 +47,6 @@ public class KanbanState
 }
 
 public enum NotificationKind { Info, Success, Error }
+
+/// <summary>Qué entidad crea el botón "Nuevo" de la cabecera según la sección activa.</summary>
+public enum CreateTarget { Book, Category }

@@ -5,7 +5,11 @@ namespace MyBooksKanban.Application.Interfaces;
 
 public interface IBookService
 {
-    Task<BoardViewModel> GetBoardAsync(CancellationToken ct = default);
+    Task<BoardViewModel> GetBoardAsync(
+        string? term = null,
+        int? categoryId = null,
+        ReadingStatus? status = null,
+        CancellationToken ct = default);
 
     Task<BookFormModel?> GetForEditAsync(int id, CancellationToken ct = default);
 
@@ -33,6 +37,12 @@ public interface IBookService
     /// no es un error, simplemente no mueve nada—. Devuelve <c>null</c> si el libro no existe.
     /// </summary>
     Task<BookSummary?> UpdateProgressAsync(int bookId, int page, CancellationToken ct = default);
+
+    /// <summary>
+    /// Marca el libro como terminado: completa todas las páginas, lo mueve a «Leído»
+    /// y fija la fecha de fin. Devuelve <c>null</c> si el libro no existe.
+    /// </summary>
+    Task<BookSummary?> CompleteAsync(int bookId, CancellationToken ct = default);
 
     Task UpdateCoverAsync(int bookId, string relativePath, CancellationToken ct = default);
 }

@@ -8,7 +8,7 @@
 
 <PageTitle>Editar libro · My Books Kanban</PageTitle>
 
-<section class="page">
+<section class="page page-centered">
     <nav aria-label="breadcrumb" class="breadcrumb">
         <a href="" class="breadcrumb-link">Tablero</a>
         <span class="breadcrumb-sep" aria-hidden="true">/</span>
@@ -29,7 +29,7 @@
     <div class="page-body">
         @if (model is null)
         {
-            <div class="page-body-narrow">
+            <div>
                 <EmptyState Title="Libro no encontrado"
                             Description="No se puede editar: el libro no existe.">
                     <a class="btn btn-primary" href="">Volver al tablero</a>

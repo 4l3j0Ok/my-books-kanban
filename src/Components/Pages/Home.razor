@@ -4,19 +4,13 @@
 @inject ICoverStorageService CoverStorage
 @inject KanbanState State
 @inject NavigationManager Nav
-@inject IJSRuntime JS
-@implements IAsyncDisposable
+@implements IDisposable
 
 <PageTitle>Tablero · My Books Kanban</PageTitle>
 
-<section class="library" aria-label="Tu biblioteca">
+<section class="library page-centered" aria-label="Tu biblioteca">
     <header class="library-header">
-        <p class="library-eyebrow">
-            <span class="library-eyebrow-rule" aria-hidden="true"></span>
-            <span>Tu biblioteca</span>
-            <span class="library-eyebrow-rule" aria-hidden="true"></span>
-        </p>
-        <h1 class="library-title">El tablero, de un vistazo</h1>
+        <h1 class="library-title">Tu biblioteca</h1>
         <p class="library-stats">
             <span><strong>@TotalBooks</strong> libros</span>
             <span class="library-stats-dot" aria-hidden="true">·</span>
@@ -41,6 +35,7 @@
     <div class="drawer-panel @PanelAnimationClass">
         <div class="drawer-handle" aria-hidden="true"></div>
         <BookCoverDetail Book="SelectedBook" FormModel="FormModel" Categories="categories" OnClose="CloseBook"
+                         OnStatusChange="ChangeStatus" OnComplete="CompleteBook"
         OnDelete="ConfirmDelete" OnSave="SaveBook" OnProgressChange="ChangeProgress" />
     </div>
 </div>
@@ -50,36 +45,17 @@
     private List<CategoryListItem> categories = new();
     private BookSummary? SelectedBook;
     private BookFormModel? FormModel;
-    private IJSObjectReference? _jsModule;
-
     private string DrawerClass => SelectedBook is null ? "is-closed" : "is-open";
 
-    private string PanelAnimationClass => SelectedBook is null ? string.Empty : "animate__animated animate__flipInY";
+    private string PanelAnimationClass => SelectedBook is null ? string.Empty : "drawer-panel-turn";
 
     private int TotalBooks => board.Columns.Values.Sum(c => c.Count);
 
     protected override async Task OnInitializedAsync()
     {
         State.Changed += OnStateChanged;
+        State.DataChanged += OnDataChanged;
         await ReloadAsync();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
-
-        try
-        {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/kanbanInterop.js");
-        }
-        catch (JSException)
-        {
-            _jsModule = null;
-        }
-        catch (InvalidOperationException)
-        {
-            _jsModule = null;
-        }
     }
 
     private async Task ReloadAsync()
@@ -88,7 +64,7 @@
         try
         {
             categories = (await CategoryService.ListAsync()).ToList();
-            board = await BookService.GetBoardAsync();
+            board = await BookService.GetBoardAsync(State.SearchTerm, State.CategoryId, State.Status);
         }
         finally
         {
@@ -117,23 +93,6 @@
             ? null
             : await BookService.GetForEditAsync(id);
 
-        if (_jsModule is not null)
-        {
-            try
-            {
-                var animated = await _jsModule.InvokeAsync<bool>(
-                    "openBookDetailWithTransition", id);
-                if (animated)
-                {
-                    OpenPreparedBook(id, selectedBook, formModel);
-                    return;
-                }
-            }
-            catch (JSDisconnectedException) { }
-            catch (JSException) { }
-            catch (OperationCanceledException) { }
-        }
-
         OpenPreparedBook(id, selectedBook, formModel);
     }
 
@@ -146,24 +105,6 @@
 
     private async Task CloseBook()
     {
-        var bookId = SelectedBook?.Id;
-        if (bookId is not null && _jsModule is not null)
-        {
-            try
-            {
-                var animated = await _jsModule.InvokeAsync<bool>(
-                    "closeBookDetailWithTransition", bookId.Value);
-                if (animated)
-                {
-                    CloseBookCore();
-                    return;
-                }
-            }
-            catch (JSDisconnectedException) { }
-            catch (JSException) { }
-            catch (OperationCanceledException) { }
-        }
-
         CloseBookCore();
     }
 
@@ -217,6 +158,45 @@
         }
     }
 
+    private async Task CompleteBook()
+    {
+        if (SelectedBook is null) return;
+
+        try
+        {
+            var id = SelectedBook.Id;
+            var updated = await BookService.CompleteAsync(id);
+            if (updated is null) return;
+
+            await ReloadAsync();
+            SelectedBook = updated;
+            FormModel = await BookService.GetForEditAsync(id);
+            State.NotifySuccess("Libro completado.");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private async Task ChangeStatus(ReadingStatus status)
+    {
+        if (SelectedBook is null) return;
+
+        try
+        {
+            var id = SelectedBook.Id;
+            await BookService.MoveAsync(id, status, null);
+            await ReloadAsync();
+            SelectedBook = await BookService.GetSummaryAsync(id);
+            if (FormModel is not null) FormModel.ReadingStatus = status;
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
     private void ConfirmDelete(int id)
     {
         State.NotifyInfo($"Confirmación de borrado del libro {id} aún no implementada en Home; use la página de detalle.");
@@ -238,14 +218,11 @@
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
 
-    public async ValueTask DisposeAsync()
+    private void OnDataChanged() => InvokeAsync(ReloadAsync);
+
+    public void Dispose()
     {
         State.Changed -= OnStateChanged;
-
-        if (_jsModule is not null)
-        {
-            try { await _jsModule.DisposeAsync(); }
-            catch (JSDisconnectedException) { }
-        }
+        State.DataChanged -= OnDataChanged;
     }
 }

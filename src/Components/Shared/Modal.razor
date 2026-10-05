@@ -1,0 +1,29 @@
+@* Modal accesible genérico: fondo oscuro, cierre con clic fuera o Escape. *@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true"
+     aria-labelledby="@TitleId" @onkeydown="OnKeyDown">
+    <div class="absolute inset-0 bg-black/40" @onclick="Close"></div>
+    <div class="@($"relative flex max-h-full w-full flex-col rounded-sm bg-[var(--surface)] shadow-lg {WidthClass}")">
+        <div class="flex items-start justify-between gap-4 border-b border-[var(--shelf)]/20 px-5 py-4">
+            <h2 id="@TitleId" class="m-0 font-display text-lg font-semibold tracking-tight text-[var(--ink)]">@Title</h2>
+            <button type="button" aria-label="Cerrar"
+                    class="font-body text-lg leading-none text-[var(--muted)] hover:text-[var(--ink)]"
+                    @onclick="Close">×</button>
+        </div>
+        <div class="overflow-y-auto px-5 py-4">
+            @ChildContent
+        </div>
+    </div>
+</div>
+
+@code {
+    private const string TitleId = "mbk-modal-title";
+
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string WidthClass { get; set; } = "max-w-md";
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private Task OnKeyDown(KeyboardEventArgs e) => e.Key == "Escape" ? Close() : Task.CompletedTask;
+}

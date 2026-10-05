@@ -1,0 +1,31 @@
+@inject ICategoryService CategoryService
+@inject KanbanState State
+
+<Modal Title="Nueva categoría" OnClose="State.CloseCreate">
+    <form @onsubmit="HandleSubmit">
+        <label for="cat-name" class="index-label">Nombre</label>
+        <InputText id="cat-name" class="index-input" @bind-Value="name" placeholder="Nombre de la categoría…" autofocus />
+        <div class="mt-5 flex justify-end gap-2">
+            <button class="btn btn-ghost" type="button" @onclick="State.CloseCreate">Cancelar</button>
+            <button class="btn btn-primary" type="submit">Agregar</button>
+        </div>
+    </form>
+</Modal>
+
+@code {
+    private string name = string.Empty;
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(name)) { State.NotifyError("Escribe un nombre."); return; }
+
+        try
+        {
+            await CategoryService.CreateAsync(name);
+            State.CloseCreate();
+            State.NotifySuccess("Categoría agregada.");
+            State.NotifyDataChanged();
+        }
+        catch (Exception ex) { State.NotifyError(ex.Message); }
+    }
+}

@@ -3,53 +3,13 @@
 @implements IDisposable
 
 <div class="app-shell">
-    <header class="masthead" role="banner">
-        <div class="masthead-row">
-            <a class="masthead-brand" href="" aria-label="Inicio My Books Kanban">
-                <span class="masthead-mark" aria-hidden="true">M·B·K</span>
-                <span class="masthead-titles">
-                    <span class="masthead-title">My Books <em>Kanban</em></span>
-                    <span class="masthead-sub">Bitácora de seguimiento de tus libros</span>
-                </span>
-            </a>
-            <button type="button" @onclick="ToggleTheme"
-                    class="theme-toggle"
-                    aria-label="Cambiar tema claro u oscuro">
-                <span class="theme-toggle-label">Tema</span>
-            </button>
-        </div>
-        <div class="masthead-rule" aria-hidden="true"></div>
-        <nav class="masthead-nav" aria-label="Principal">
-            <ul class="masthead-nav-list">
-                <li>
-                    <a href="" @onclick="GoHome" @onclick:preventDefault
-                       class="masthead-nav-link @IsActive("")">
-                        <span class="masthead-nav-num">01</span>
-                        <span>Tablero</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="books/new"
-                       class="masthead-nav-link @IsActive("books/new")">
-                        <span class="masthead-nav-num">02</span>
-                        <span>Nuevo libro</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="categories"
-                       class="masthead-nav-link @IsActive("categories")">
-                        <span class="masthead-nav-num">03</span>
-                        <span>Categorías</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </header>
+    <SiteHeader />
 
     <main class="app-main" role="main">
         @Body
     </main>
 
+    <CreateModalHost />
     <NotificationToast />
     <ConfirmDialog />
 
@@ -62,46 +22,11 @@
 </div>
 
 @code {
-    [Inject] private NavigationManager Nav { get; set; } = default!;
-
-    private string _currentPath = string.Empty;
-
-    protected override void OnInitialized()
-    {
-        State.Changed += OnStateChanged;
-        Nav.LocationChanged += OnLocationChanged;
-        _currentPath = CurrentRelativePath();
-    }
-
-    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        _currentPath = CurrentRelativePath();
-        InvokeAsync(StateHasChanged);
-    }
-
-    private string CurrentRelativePath()
-    {
-        var path = Nav.ToBaseRelativePath(Nav.Uri);
-        return path.StartsWith("/") ? path[1..] : path;
-    }
-
-    private string IsActive(string target) =>
-        string.Equals(_currentPath, target, StringComparison.OrdinalIgnoreCase) ? "is-active" : string.Empty;
+    protected override void OnInitialized() => State.Changed += OnStateChanged;
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
 
-    private void GoHome() => Nav.NavigateTo("");
-
-    private void ToggleTheme()
-    {
-        State.NotifyInfo("Función de cambio de tema no implementada aún.");
-        @* State.ToggleTheme(); *@
-    }
-
     public int CurrentYear => DateTime.Now.Year;
-    public void Dispose()
-    {
-        State.Changed -= OnStateChanged;
-        Nav.LocationChanged -= OnLocationChanged;
-    }
+
+    public void Dispose() => State.Changed -= OnStateChanged;
 }

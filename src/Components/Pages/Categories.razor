@@ -6,39 +6,16 @@
 
 <PageTitle>Categorías · My Books Kanban</PageTitle>
 
-<section class="page">
-    <nav aria-label="breadcrumb" class="breadcrumb">
-        <a href="" class="breadcrumb-link">Tablero</a>
-        <span class="breadcrumb-sep" aria-hidden="true">/</span>
-        <span class="breadcrumb-current" aria-current="page">Categorías</span>
-    </nav>
-
+<section class="page page-centered">
     <header class="page-header">
-        <p class="page-eyebrow">
-            <span class="page-eyebrow-rule" aria-hidden="true"></span>
-            <span>Índice</span>
-            <span class="page-eyebrow-rule" aria-hidden="true"></span>
-        </p>
         <h1 class="page-title">Categorías</h1>
-        <p class="page-lede">Una taxonomía personal para agrupar tu biblioteca. Edita, agrega o retira lo que ya no uses.</p>
+        <p class="page-lede">Agrupa tu biblioteca creando categorías para tus libros.</p>
     </header>
 
-    <div class="page-body page-body-narrow">
-        <form class="index-bar" @onsubmit="HandleCreate">
-            <div class="index-fields">
-                <div class="index-field index-field-grow">
-                    <label for="cat-name" class="index-label">Nueva categoría</label>
-                    <InputText id="cat-name" class="index-input" @bind-Value="newName" placeholder="Nombre de la categoría…" />
-                </div>
-            </div>
-            <div class="index-actions">
-                <button class="btn btn-primary" type="submit">Agregar</button>
-            </div>
-        </form>
-
+    <div class="page-body">
         @if (categories.Count == 0)
         {
-            <EmptyState Title="Sin categorías" Description="Agrega la primera usando el formulario." />
+            <EmptyState Title="Sin categorías" Description="Agrega la primera con el botón «Nueva categoría»." />
         }
         else
         {
@@ -78,30 +55,17 @@
 
 @code {
     private List<CategoryListItem> categories = new();
-    private string newName = string.Empty;
     private int? editingId;
     private string editName = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         State.Changed += OnStateChanged;
+        State.DataChanged += OnDataChanged;
         await Reload();
     }
 
     private async Task Reload() => categories = (await CategoryService.ListAsync()).ToList();
-
-    private async Task HandleCreate()
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(newName)) { State.NotifyError("Escribe un nombre."); return; }
-            await CategoryService.CreateAsync(newName);
-            newName = string.Empty;
-            await Reload();
-            State.NotifySuccess("Categoría agregada.");
-        }
-        catch (Exception ex) { State.NotifyError(ex.Message); }
-    }
 
     private void StartEdit(CategoryListItem c)
     {
@@ -145,5 +109,16 @@
     }
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
-    public void Dispose() => State.Changed -= OnStateChanged;
+
+    private void OnDataChanged() => InvokeAsync(async () =>
+    {
+        await Reload();
+        StateHasChanged();
+    });
+
+    public void Dispose()
+    {
+        State.Changed -= OnStateChanged;
+        State.DataChanged -= OnDataChanged;
+    }
 }

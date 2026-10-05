@@ -20,11 +20,14 @@ public class BookService : IBookService
         _logger = logger;
     }
 
-    public async Task<BoardViewModel> GetBoardAsync(CancellationToken ct = default)
+    public async Task<BoardViewModel> GetBoardAsync(
+        string? term = null,
+        int? categoryId = null,
+        ReadingStatus? status = null,
+        CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var books = await db.Books.AsNoTracking()
-            .Include(b => b.Category)
+        var books = await ApplyFilters(db.Books.AsNoTracking().Include(b => b.Category), term, categoryId, status)
             .OrderBy(b => b.ReadingStatus).ThenBy(b => b.Position)
             .ToListAsync(ct);
 
@@ -34,8 +37,8 @@ public class BookService : IBookService
                 g => g.Key,
                 g => (IReadOnlyList<BookSummary>)g.Select(ToSummary).ToList());
 
-        foreach (var status in BoardViewModel.AllStatuses)
-            grouped.TryAdd(status, Array.Empty<BookSummary>());
+        foreach (var s in BoardViewModel.AllStatuses)
+            grouped.TryAdd(s, Array.Empty<BookSummary>());
 
         return new BoardViewModel { Columns = grouped };
     }
@@ -62,6 +65,7 @@ public class BookService : IBookService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var book = ToEntity(model);
         book.Position = await GetNextPositionAsync(db, book.ReadingStatus, ct);
+        ApplyFinishedDate(book);
         book.CreatedAt = DateTime.UtcNow;
         book.UpdatedAt = DateTime.UtcNow;
         db.Books.Add(book);
@@ -84,18 +88,21 @@ public class BookService : IBookService
         book.Description = model.Description;
         book.CoverPath = model.CoverPath;
         book.SpineColor = model.SpineColor;
-        book.ReadingStatus = model.ReadingStatus;
+        if (book.ReadingStatus != model.ReadingStatus)
+        {
+            book.Position = await GetNextPositionAsync(db, model.ReadingStatus, ct);
+            book.ReadingStatus = model.ReadingStatus;
+        }
         book.CategoryId = model.CategoryId;
         book.PageCount = model.PageCount;
         book.CurrentPage = model.CurrentPage;
         book.Rating = model.Rating;
         book.Isbn = model.Isbn;
         book.StartedAt = model.StartedAt;
-        book.FinishedAt = model.FinishedAt;
         book.UpdatedAt = DateTime.UtcNow;
 
-        if (book.ReadingStatus == ReadingStatus.Read && book.FinishedAt is null)
-            book.FinishedAt = DateTime.UtcNow;
+        // La fecha de fin no es editable: la fija el paso a «Leído» y se borra al salir.
+        ApplyFinishedDate(book);
 
         await db.SaveChangesAsync(ct);
         _logger.LogInformation("Libro actualizado: {Title} (Id={Id})", book.Title, book.Id);
@@ -128,16 +135,7 @@ public class BookService : IBookService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var query = db.Books.AsNoTracking().Include(b => b.Category).AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(term))
-        {
-            var lowered = term.Trim().ToLower();
-            query = query.Where(b =>
-                b.Title.ToLower().Contains(lowered) ||
-                b.Author.ToLower().Contains(lowered));
-        }
-
-        if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId.Value);
-        if (status.HasValue) query = query.Where(b => b.ReadingStatus == status.Value);
+        query = ApplyFilters(query, term, categoryId, status);
 
         var total = await query.CountAsync(ct);
         var items = await query
@@ -149,6 +147,22 @@ public class BookService : IBookService
         return new PageResult<BookSummary>(items, page, pageSize, total);
     }
 
+    private static IQueryable<Book> ApplyFilters(
+        IQueryable<Book> query, string? term, int? categoryId, ReadingStatus? status)
+    {
+        if (!string.IsNullOrWhiteSpace(term))
+        {
+            var lowered = term.Trim().ToLower();
+            query = query.Where(b =>
+                b.Title.ToLower().Contains(lowered) ||
+                b.Author.ToLower().Contains(lowered));
+        }
+
+        if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId.Value);
+        if (status.HasValue) query = query.Where(b => b.ReadingStatus == status.Value);
+        return query;
+    }
+
     public async Task MoveAsync(int bookId, ReadingStatus targetStatus, int? targetIndex, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
@@ -158,6 +172,7 @@ public class BookService : IBookService
         var origin = book.ReadingStatus;
         book.ReadingStatus = targetStatus;
         book.UpdatedAt = DateTime.UtcNow;
+        ApplyFinishedDate(book);
 
         var destinationBooks = await db.Books
             .Where(b => b.ReadingStatus == targetStatus && b.Id != bookId)
@@ -183,6 +198,29 @@ public class BookService : IBookService
         await db.SaveChangesAsync(ct);
         _logger.LogInformation("Libro movido: {Id} {From} -> {To} pos {Pos}",
             bookId, origin, targetStatus, insertAt);
+    }
+
+    public async Task<BookSummary?> CompleteAsync(int bookId, CancellationToken ct = default)
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync(ct))
+        {
+            var book = await db.Books.FirstOrDefaultAsync(b => b.Id == bookId, ct);
+            if (book is null) return null;
+
+            if (book.PageCount is { } total) book.CurrentPage = total;
+            await db.SaveChangesAsync(ct);
+        }
+
+        await MoveAsync(bookId, ReadingStatus.Read, null, ct);
+        return await GetSummaryAsync(bookId, ct);
+    }
+
+    private static void ApplyFinishedDate(Book book)
+    {
+        if (book.ReadingStatus == ReadingStatus.Read)
+            book.FinishedAt ??= DateTime.UtcNow;
+        else
+            book.FinishedAt = null;
     }
 
     public async Task<BookSummary?> UpdateProgressAsync(int bookId, int page, CancellationToken ct = default)
@@ -238,7 +276,8 @@ public class BookService : IBookService
 
     private static BookSummary ToSummary(Book b) =>
         new(b.Id, b.Title, b.Author, b.CoverPath, b.SpineColor, b.ReadingStatus, b.Position,
-            b.CurrentPage, b.PageCount, b.Rating, b.Category?.Name ?? string.Empty);
+            b.CurrentPage, b.PageCount, b.Rating, b.Category?.Name ?? string.Empty,
+            b.Description, b.Isbn, b.StartedAt, b.FinishedAt);
 
     private static BookFormModel ToFormModel(Book b) => new()
     {

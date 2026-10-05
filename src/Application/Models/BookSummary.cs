@@ -14,4 +14,8 @@ public sealed record BookSummary(
     int? CurrentPage,
     int? PageCount,
     int? Rating,
-    string CategoryName);
+    string CategoryName,
+    string? Description = null,
+    string? Isbn = null,
+    DateTime? StartedAt = null,
+    DateTime? FinishedAt = null);

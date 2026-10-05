@@ -1,0 +1,36 @@
+@implements IDisposable
+@inject NavigationManager Nav
+@inject KanbanState State
+
+<header class="site-header" role="banner">
+    <div class="site-header-inner">
+        <a class="site-brand" href="" aria-label="My Books Kanban, ir al tablero">
+            <span class="site-brand-mark" aria-hidden="true">M·B·K</span>
+            <span class="site-brand-title">My Books <em>Kanban</em></span>
+        </a>
+
+        <nav class="site-nav" aria-label="Principal">
+            <NavLink class="site-nav-link" href="" Match="NavLinkMatch.All">Tablero</NavLink>
+            <NavLink class="site-nav-link" href="categories">Categorías</NavLink>
+            <button type="button" class="site-nav-action" @onclick="() => State.OpenCreate(Target)">
+                <span aria-hidden="true">+</span> @ActionLabel
+            </button>
+        </nav>
+    </div>
+</header>
+
+@code {
+    private bool OnCategories =>
+        Nav.ToBaseRelativePath(Nav.Uri).StartsWith("categories", StringComparison.OrdinalIgnoreCase);
+
+    private CreateTarget Target => OnCategories ? CreateTarget.Category : CreateTarget.Book;
+
+    private string ActionLabel => OnCategories ? "Nueva categoría" : "Nuevo libro";
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

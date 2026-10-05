@@ -10,15 +10,13 @@
             <p class="mb-5 font-body text-sm leading-relaxed text-[var(--muted)]">@Message</p>
             <div class="flex justify-end gap-2">
                 <button type="button" class="inline-flex items-center justify-center rounded-sm border border-[var(--shelf)]/30 px-3 py-1.5 font-body text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]" @onclick="Cancel">@CancelText</button>
-                <button type="button" class="inline-flex items-center justify-center rounded-sm bg-[var(--danger)] px-3 py-1.5 font-body text-xs font-semibold text-white hover:opacity-90" @onclick="Confirm">@ConfirmText</button>
+                <button type="button" class="@(Destructive ? "bg-[var(--danger)]" : "bg-[var(--success)]") inline-flex items-center justify-center rounded-sm px-3 py-1.5 font-body text-xs font-semibold text-white hover:opacity-90" @onclick="Confirm">@ConfirmText</button>
             </div>
         </div>
     </div>
 }
 
 @code {
-    [Inject] private KanbanState State { get; set; } = default!;
-
     private bool Visible { get; set; }
     private string Title { get; set; } = "¿Confirmas la acción?";
     private string Message { get; set; } = string.Empty;
@@ -26,8 +24,11 @@
     private string CancelText { get; set; } = "Cancelar";
     private Func<Task>? OnConfirm { get; set; }
 
-    public void Show(string title, string message, string confirmText, string cancelText, Func<Task> onConfirm)
+    private bool Destructive { get; set; } = true;
+
+    public void Show(string title, string message, string confirmText, string cancelText, Func<Task> onConfirm, bool destructive = true)
     {
+        Destructive = destructive;
         Title = title; Message = message;
         ConfirmText = confirmText; CancelText = cancelText;
         OnConfirm = onConfirm;

@@ -10,6 +10,14 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Acento del libro (calculado con contraste suficiente contra la tarjeta). */
+  --brass: var(--accent-light, #b8863a);
+  --brass-strong: var(--accent-light-strong, #9a6e2a);
+}
+
+[data-theme="dark"] .catalogue:not(.has-cover) {
+  --brass: var(--accent-dark, #d4a65a);
+  --brass-strong: var(--accent-dark, #c8904a);
 }
 
 /* Portada de fondo: recortada, centrada y estática. */
@@ -229,6 +237,43 @@
   transition: width 0.3s ease;
 }
 
+::deep .catalogue-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+::deep .catalogue-field-stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+::deep .catalogue-description {
+  text-align: left;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+::deep .catalogue-select {
+  padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--ink);
+  background-color: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--brass) 55%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+::deep .catalogue-select:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+::deep .catalogue-complete {
+  align-self: flex-end;
+}
+
 /* Paginador */
 ::deep .catalogue-pager {
   display: flex;
@@ -332,8 +377,8 @@
   --shelf: #d4c5a9;
   --ink: #241d10;
   --muted: #5b5241;
-  --brass: #8a6122;
-  --brass-strong: #6d4a18;
+  --brass: var(--accent-light, #8a6122);
+  --brass-strong: var(--accent-light-strong, #6d4a18);
   /* --surface sigue siendo opaco para los hijos (inputs, hovers). */
   position: relative;
   isolation: isolate;
@@ -386,7 +431,7 @@
 
 /* Cabecera y regla viven sobre la imagen: tinta clara, no la del tema. */
 .has-cover ::deep .catalogue-eyebrow {
-  color: #eac97f;
+  color: var(--accent-dark, #eac97f);
 }
 
 .has-cover ::deep .catalogue-close {
@@ -401,7 +446,7 @@
 }
 
 .has-cover ::deep .catalogue-rule::before {
-  background: #eac97f;
+  background: var(--accent-dark, #eac97f);
 }
 
 .has-cover ::deep .catalogue-rule::after {

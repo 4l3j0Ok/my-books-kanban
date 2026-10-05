@@ -60,6 +60,64 @@ public static class SpinePalette
         return (accent, ink, halo);
     }
 
+    /// <summary>Fondo claro de las tarjetas de la ficha.</summary>
+    public const string CardBackground = "#f5f1e8";
+
+    /// <summary>Fondo oscuro sobre el que se asienta la ficha en el tema oscuro o sobre una portada.</summary>
+    public const string DarkBackground = "#1c1814";
+
+    private const double MinAccentContrast = 4.5;
+
+    /// <summary>
+    /// Acento de la ficha derivado del color del libro. Sobre fondo claro se oscurece
+    /// lo justo para alcanzar contraste legible; sobre fondo oscuro se aclara.
+    /// El color intacto se conserva si ya contrasta lo suficiente.
+    /// </summary>
+    public static (string OnLight, string OnLightStrong, string OnDark) AccentsFor(string? color, string? categoryName)
+    {
+        var accent = Resolve(color, categoryName).Accent;
+        TryParseHex(accent, out var rgb);
+
+        var onLight = EnsureContrast(rgb, CardBackground, MinAccentContrast, darker: true);
+        var onDark = EnsureContrast(rgb, DarkBackground, MinAccentContrast, darker: false);
+        var strong = Darken(onLight, 0.82);
+
+        return (onLight, strong, onDark);
+    }
+
+    /// <summary>
+    /// Mueve la luminosidad hasta alcanzar el contraste mínimo contra el fondo,
+    /// preservando tono y saturación.
+    /// </summary>
+    public static string EnsureContrast((byte R, byte G, byte B) rgb, string backgroundHex, double minRatio, bool darker)
+    {
+        if (!TryParseHex(backgroundHex, out var bg)) return ToHex(rgb.R, rgb.G, rgb.B);
+
+        var backgroundLuminance = RelativeLuminance(bg);
+        var (hue, saturation, lightness) = ToHsl(rgb);
+        var current = ToHex(rgb.R, rgb.G, rgb.B);
+
+        for (var step = 0; step <= 100; step++)
+        {
+            if (ContrastRatio(current, backgroundLuminance) >= minRatio) return current;
+
+            lightness += darker ? -0.01 : 0.01;
+            if (lightness < 0 || lightness > 1) break;
+            current = HslToHex(hue, saturation, lightness);
+        }
+
+        return current;
+    }
+
+    private static double ContrastRatio(string hex, double otherLuminance)
+    {
+        if (!TryParseHex(hex, out var rgb)) return 1;
+
+        var l = RelativeLuminance(rgb);
+        var (hi, lo) = l > otherLuminance ? (l, otherLuminance) : (otherLuminance, l);
+        return (hi + 0.05) / (lo + 0.05);
+    }
+
     /// <summary>
     /// Lleva el color a la banda de luminosidad legible sin tocar tono ni saturación.
     /// Devuelve el color intacto si ya está dentro de la banda.

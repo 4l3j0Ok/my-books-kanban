@@ -8,14 +8,14 @@
 
 <PageTitle>Detalle · My Books Kanban</PageTitle>
 
-<section class="page">
+<section class="page page-centered">
     <nav aria-label="breadcrumb" class="breadcrumb">
         <a href="" class="breadcrumb-link">Tablero</a>
         <span class="breadcrumb-sep" aria-hidden="true">/</span>
         <span class="breadcrumb-current" aria-current="page">Detalle</span>
     </nav>
 
-    <div class="page-body page-body-narrow">
+    <div class="page-body">
         @if (book is null)
         {
             <EmptyState Title="Libro no encontrado"
@@ -32,7 +32,9 @@
                     OnClose="ClosePage"
                     OnDelete="ConfirmDelete"
                     OnSave="Save"
-                    OnProgressChange="ChangeProgress" />
+                    OnProgressChange="ChangeProgress"
+                    OnStatusChange="ChangeStatus"
+                    OnComplete="CompleteBook" />
             </div>
         }
     </div>
@@ -79,6 +81,34 @@
 
             book = updated;
             if (form is not null) form.CurrentPage = updated.CurrentPage;
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private async Task CompleteBook()
+    {
+        try
+        {
+            book = await BookService.CompleteAsync(Id);
+            form = await BookService.GetForEditAsync(Id);
+            State.NotifySuccess("Libro completado.");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
+    }
+
+    private async Task ChangeStatus(ReadingStatus status)
+    {
+        try
+        {
+            await BookService.MoveAsync(Id, status, null);
+            book = await BookService.GetSummaryAsync(Id);
+            form = await BookService.GetForEditAsync(Id);
         }
         catch (Exception ex)
         {

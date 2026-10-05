@@ -1,0 +1,20 @@
+@implements IDisposable
+@inject KanbanState State
+
+@switch (State.ActiveCreate)
+{
+    case CreateTarget.Book:
+        <BookCreateModal />
+        break;
+    case CreateTarget.Category:
+        <CategoryCreateModal />
+        break;
+}
+
+@code {
+    protected override void OnInitialized() => State.Changed += OnStateChanged;
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => State.Changed -= OnStateChanged;
+}
