@@ -4,8 +4,6 @@ services:
   app:
     image: ghcr.io/4l3j0ok/my-books-kanban:latest
     container_name: my-books-kanban
-    ports:
-      - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
