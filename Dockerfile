@@ -37,10 +37,13 @@ RUN dotnet publish "src/my-books-kanban.csproj" \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# Se ejecuta como usuario no root cuando es posible.
-USER $APP_UID
-
 COPY --from=build /app/publish .
+
+RUN mkdir -p /data /app/wwwroot/uploads/covers \
+    && chown -R $APP_UID:$APP_UID /data /app/wwwroot/uploads
+
+# Se ejecuta como usuario no root.
+USER $APP_UID
 
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
