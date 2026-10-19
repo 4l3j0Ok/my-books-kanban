@@ -19,9 +19,32 @@ public class BookServiceTests : IAsyncLifetime
         await using var db = await _factory.CreateDbContextAsync();
         await DbSeeder.SeedAsync(db);
         _sut = new BookService(_factory, NullLogger<BookService>.Instance);
+        await SeedBooksAsync();
     }
 
     public Task DisposeAsync() { _factory = null!; return Task.CompletedTask; }
+
+    private async Task SeedBooksAsync()
+    {
+        var cat = (await new CategoryService(_factory, NullLogger<CategoryService>.Instance).ListAsync()).First();
+        var samples = new[]
+        {
+            ("Dune", "Frank Herbert", ReadingStatus.ToRead),
+            ("Fundación", "Isaac Asimov", ReadingStatus.ToRead),
+            ("Hyperion", "Dan Simmons", ReadingStatus.Reading),
+            ("Solaris", "Stanisław Lem", ReadingStatus.Read)
+        };
+        foreach (var (title, author, status) in samples)
+        {
+            await _sut.CreateAsync(new BookFormModel
+            {
+                Title = title,
+                Author = author,
+                CategoryId = cat.Id,
+                ReadingStatus = status
+            });
+        }
+    }
 
     [Fact]
     public async Task GetBoardAsync_returns_three_columns()

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using MyBooksKanban.Application.Models;
 using MyBooksKanban.Application.Services;
 using MyBooksKanban.Infrastructure.Data;
 using Xunit;
@@ -40,6 +41,14 @@ public class CategoryServiceTests : IAsyncLifetime
     [Fact]
     public async Task DeleteAsync_blocks_when_in_use()
     {
+        var categoryId = (await _sut.ListAsync()).First().Id;
+        await new BookService(_factory, NullLogger<BookService>.Instance).CreateAsync(new BookFormModel
+        {
+            Title = "Dune",
+            Author = "Frank Herbert",
+            CategoryId = categoryId
+        });
+
         var list = await _sut.ListAsync();
         var inUse = list.First(c => c.BookCount > 0);
         var result = await _sut.DeleteAsync(inUse.Id);
