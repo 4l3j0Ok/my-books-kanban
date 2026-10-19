@@ -19,4 +19,3 @@
 *.db
 *.db-shm
 *.db-wal
-src/wwwroot/app.src.css

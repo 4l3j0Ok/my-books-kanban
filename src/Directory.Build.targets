@@ -9,6 +9,12 @@
     <TailwindTool>$(MSBuildThisFileDirectory)..\tools\tailwindcss</TailwindTool>
   </PropertyGroup>
 
+  <!-- En Release el binario es obligatorio: evita publicar un app.css desactualizado. -->
+  <Target Name="RequireTailwind" BeforeTargets="Build;Compile;ResolveStaticWebAssetsInputs"
+          Condition="'$(Configuration)' == 'Release' And !Exists('$(TailwindTool)')">
+    <Error Text="No se encontró $(TailwindTool). Descarga el binario standalone de Tailwind v3.4.17 en tools/tailwindcss." />
+  </Target>
+
   <Target Name="CompileTailwind" BeforeTargets="Build;Compile;ResolveStaticWebAssetsInputs"
           Condition="Exists('$(TailwindTool)')">
     <Message Text="Compilando Tailwind → $(TailwindOutput)" Importance="high" />

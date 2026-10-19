@@ -10,8 +10,23 @@ COPY ["src/Directory.Build.props", "./src/"]
 COPY ["src/Directory.Build.targets", "./src/"]
 RUN dotnet restore "src/my-books-kanban.csproj"
 
-# Copia el resto y compila (el target CompileTailwind se ejecuta automáticamente).
+# Copia el resto del código fuente.
 COPY . .
+
+# Binario standalone de Tailwind (no se versiona en git); obligatorio en Release.
+ARG TARGETARCH
+ARG TAILWIND_VERSION=3.4.17
+RUN case "${TARGETARCH}" in \
+      amd64) TW_ARCH=x64 ;; \
+      arm64) TW_ARCH=arm64 ;; \
+      *) echo "Arquitectura no soportada: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && mkdir -p tools \
+    && curl -fsSL -o tools/tailwindcss \
+       "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${TW_ARCH}" \
+    && chmod +x tools/tailwindcss
+
+# Compila y publica (el target CompileTailwind regenera app.css).
 RUN dotnet publish "src/my-books-kanban.csproj" \
     --configuration Release \
     --output /app/publish \
