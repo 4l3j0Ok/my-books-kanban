@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- Etapa SDK ----------
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copia y restaura primero para aprovechar caché de capas.
@@ -14,12 +14,13 @@ RUN dotnet restore "src/my-books-kanban.csproj"
 COPY . .
 
 # Binario standalone de Tailwind (no se versiona en git); obligatorio en Release.
-ARG TARGETARCH
+# La etapa build corre en la arquitectura del runner (sin QEMU); la salida es portable.
+ARG BUILDARCH
 ARG TAILWIND_VERSION=3.4.17
-RUN case "${TARGETARCH}" in \
+RUN case "${BUILDARCH}" in \
       amd64) TW_ARCH=x64 ;; \
       arm64) TW_ARCH=arm64 ;; \
-      *) echo "Arquitectura no soportada: ${TARGETARCH}" >&2; exit 1 ;; \
+      *) echo "Arquitectura no soportada: ${BUILDARCH}" >&2; exit 1 ;; \
     esac \
     && mkdir -p tools \
     && curl -fsSL -o tools/tailwindcss \
