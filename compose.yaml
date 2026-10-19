@@ -2,9 +2,6 @@ name: my-books-kanban
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ghcr.io/4l3j0ok/my-books-kanban:latest
     container_name: my-books-kanban
     ports:
