@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using MyBooksKanban.Application.Interfaces;
 using MyBooksKanban.Application.Services;
@@ -33,6 +34,14 @@ if (!string.IsNullOrWhiteSpace(keysPath))
         .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 }
 
+// Detrás de un proxy inverso con TLS: respeta X-Forwarded-Proto/For para generar URLs https.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -45,6 +54,8 @@ builder.Services.AddScoped<KanbanState>();
 builder.Services.AddLogging();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {

@@ -28,10 +28,11 @@ RUN case "${BUILDARCH}" in \
     && chmod +x tools/tailwindcss
 
 # Compila y publica (el target CompileTailwind regenera app.css).
+# Sin --no-restore: con el código completo el SDK añade el paquete de assets de Blazor
+# (blazor.web.js), que el restore inicial (solo .csproj) no incluye.
 RUN dotnet publish "src/my-books-kanban.csproj" \
     --configuration Release \
     --output /app/publish \
-    --no-restore \
     /p:UseAppHost=false
 
 # ---------- Etapa runtime ----------
