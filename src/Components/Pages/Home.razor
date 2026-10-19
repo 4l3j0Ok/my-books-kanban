@@ -197,9 +197,19 @@
         }
     }
 
-    private void ConfirmDelete(int id)
+    private async Task ConfirmDelete(int id)
     {
-        State.NotifyInfo($"Confirmación de borrado del libro {id} aún no implementada en Home; use la página de detalle.");
+        try
+        {
+            await BookService.DeleteAsync(id);
+            CloseBookCore();
+            await ReloadAsync();
+            State.NotifySuccess("Libro eliminado.");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
     }
 
     private async Task DropBook((int BookId, ReadingStatus Target, int TargetIndex) args)

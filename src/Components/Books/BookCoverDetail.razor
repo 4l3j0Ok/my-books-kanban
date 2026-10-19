@@ -146,7 +146,7 @@
                 <div class="catalogue-actions @PanelClass">
                     <button class="btn btn-primary" type="button" @onclick="() => Editing = true">Editar</button>
                     <button class="btn btn-danger" type="button"
-                            @onclick="() => OnDelete.InvokeAsync(Book.Id)">Eliminar</button>
+                            @onclick="AskDelete">Eliminar</button>
                 </div>
             }
         </div>
@@ -181,6 +181,17 @@
             "Completar", "Cancelar",
             () => OnComplete.InvokeAsync(),
             destructive: false);
+
+    private void AskDelete()
+    {
+        if (Book is null) return;
+        var id = Book.Id;
+        _confirm?.Show(
+            "Eliminar libro",
+            $"«{Book.Title}» se eliminará de forma permanente. ¿Continuar?",
+            "Eliminar", "Cancelar",
+            () => OnDelete.InvokeAsync(id));
+    }
 
     private bool Editing { get; set; }
 

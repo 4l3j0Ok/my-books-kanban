@@ -116,10 +116,18 @@
         }
     }
 
-    private void ConfirmDelete(int id)
+    private async Task ConfirmDelete(int id)
     {
-        State.NotifyInfo($"Para confirmar el borrado, use la opción de la página de edición (Id={id}).");
-        Nav.NavigateTo($"books/{id}/edit");
+        try
+        {
+            await BookService.DeleteAsync(id);
+            State.NotifySuccess("Libro eliminado.");
+            Nav.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            State.NotifyError(ex.Message);
+        }
     }
 
     private void ClosePage() => Nav.NavigateTo("");
