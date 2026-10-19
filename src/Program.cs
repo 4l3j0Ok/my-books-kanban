@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using MyBooksKanban.Application.Interfaces;
 using MyBooksKanban.Application.Services;
@@ -22,6 +23,15 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 
 builder.Services.AddDbContextFactory<LibraryDbContext>(options =>
     options.UseSqlite(connectionString));
+
+// Sin llaves persistentes, cada reinicio del contenedor invalida cookies y tokens antiforgery.
+var keysPath = builder.Configuration["DataProtection:KeysPath"];
+if (!string.IsNullOrWhiteSpace(keysPath))
+{
+    builder.Services.AddDataProtection()
+        .SetApplicationName("my-books-kanban")
+        .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+}
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

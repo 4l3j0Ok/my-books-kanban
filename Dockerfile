@@ -48,6 +48,7 @@ USER $APP_UID
 
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DataProtection__KeysPath=/data/keys
 
 EXPOSE 8080
 
