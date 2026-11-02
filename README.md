@@ -1,156 +1,136 @@
 # My Books Kanban
 
-Un tablero Kanban personal para llevar el seguimiento de libros, construido con **Blazor Web App** (Interactive Server) sobre **.NET 10**, con persistencia en **SQLite** mediante **EF Core 9** y estilos con **Tailwind CSS**.
+Tablero Kanban para organizar tu biblioteca personal. Cada libro es un **lomo** de cuero que se mueve entre las columnas **Por leer**, **Leyendo** y **Leído**, con portada, categoría, progreso de lectura y valoración.
 
-Los libros se mueven entre columnas (p. ej. *Pendiente → Leyendo → Terminado*), se agrupan por categoría y soportan subida de portadas.
+## Características
+
+- Tablero Kanban con tres estados de lectura (`ToRead`, `Reading`, `Read`).
+- Alta, edición, detalle y borrado de libros (título, autor, descripción, ISBN, páginas, página actual, valoración, fechas).
+- Categorías gestionables desde la propia aplicación.
+- Subida de portadas, con **color del lomo propuesto automáticamente** a partir del color dominante de la imagen (editable por el usuario).
+- Búsqueda, filtros y paginación.
+- Persistencia en SQLite; migraciones y datos iniciales se aplican al arrancar.
+- Endpoint de salud en `/health`.
 
 ## Stack
 
-- **Blazor Web App** — renderizado Interactive Server en toda la app
-- **.NET 10** (`net10.0`)
-- **EF Core 9.0.4** + **SQLite** (vía `IDbContextFactory<LibraryDbContext>`)
-- **Tailwind CSS** (CLI independiente, sin Node/npm)
-- **xUnit** + **bUnit** para tests (archivo SQLite temporal por test)
+- Blazor Web App (.NET 10), modo Interactive Server
+- EF Core 9 + SQLite
+- Tailwind CSS 3.4 (binario standalone) + CSS Isolation por componente
+- SixLabors.ImageSharp 3.1.x (análisis de color de portadas)
+- Tests: xUnit + bUnit
 
-## Inicio rápido
+## Requisitos
+
+- [.NET SDK 10](https://dotnet.microsoft.com/download)
+- Binario standalone de Tailwind CSS **v3.4.17** en `tools/tailwindcss` (no se versiona en git)
+- (Opcional) Docker, para ejecutar la imagen
+- (Opcional) `dotnet-ef` para crear migraciones
+
+### Instalar el binario de Tailwind
 
 ```bash
-# Compilar (también ejecuta el target MSBuild de Tailwind)
-dotnet build src/my-books-kanban.csproj
+mkdir -p tools
+# Linux x64; usa tailwindcss-linux-arm64, tailwindcss-macos-arm64, etc. según tu plataforma
+curl -fsSL -o tools/tailwindcss \
+  https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64
+chmod +x tools/tailwindcss
+```
 
-# Ejecutar — aplica migraciones y siembra datos al arrancar
+El build de .NET lo invoca automáticamente y regenera `src/wwwroot/app.css`. En configuración `Release` el build falla si el binario no existe.
+
+## Puesta en marcha
+
+```bash
+git clone git@github.com:4l3j0Ok/my-books-kanban.git
+cd my-books-kanban
+
 dotnet run --project src/my-books-kanban.csproj
-
-# Correr toda la suite de tests
-dotnet test
-
-# Agregar una nueva migración de EF
-dotnet tool install --global dotnet-ef --version 9.0.4
-dotnet ef migrations add Nombre --project src/my-books-kanban.csproj --output-dir Infrastructure/Migrations
-
-# Levantar con Docker (app en http://localhost:8080)
-docker compose up --build
 ```
 
-## Estructura del proyecto
+Al iniciar se aplican las migraciones y se cargan los datos iniciales. En desarrollo la base de datos es `my-books-kanban.dev.db`. Abre la URL que muestre la consola.
 
-Es una solución de **un solo proyecto** (no hay layout multi-proyecto). El código se organiza por carpetas en capas claras, con `Domain` en el núcleo y sin dependencias hacia arriba.
+## Comandos útiles
 
+```bash
+dotnet build src/my-books-kanban.csproj   # compila .NET y Tailwind
+dotnet test                               # ejecuta todos los tests
+
+# Nueva migración (requiere: dotnet tool install --global dotnet-ef --version 9.0.4)
+dotnet ef migrations add NombreMigracion \
+  --project src/my-books-kanban.csproj \
+  --output-dir Infrastructure/Migrations
 ```
-my-books-kanban/
-├── src/                            # Código fuente de la aplicación
-│   ├── my-books-kanban.csproj      # Proyecto Web SDK (.NET 10)
-│   ├── Program.cs                  # Bootstrap del host, DI, migraciones + seed al arrancar
-│   ├── appsettings*.json           # Config por entorno
-│   │
-│   ├── Directory.Build.props       # Propiedades MSBuild compartidas
-│   ├── Directory.Build.targets     # Target MSBuild `CompileTailwind`
-│   │
-│   ├── Domain/                     # Modelo de dominio puro — sin dependencias
-│   │   ├── Entities/               #   Book, Category, …
-│   │   └── Enums/                  #   BookStatus, etc.
-│   │
-│   ├── Application/                # Casos de uso, estado, contratos
-│   │   ├── Interfaces/             #   Contratos de servicios (IBookService, ICategoryService, …)
-│   │   ├── Services/               #   Implementaciones (hablan con EF Core)
-│   │   ├── Models/                 #   DTOs / form models (p. ej. BookFormModel)
-│   │   ├── Validators/             #   Reglas de validación de dominio
-│   │   └── State/                  #   KanbanState — estado de UI Scoped (la DB es la fuente de verdad)
-│   │
-│   ├── Infrastructure/             # EF Core + almacenamiento
-│   │   ├── Data/                   #   LibraryDbContext, DbSeeder
-│   │   ├── Configurations/         #   Mapeos IEntityTypeConfiguration<…>
-│   │   ├── Migrations/             #   Migraciones generadas por EF Core
-│   │   └── Storage/                #   Manejador de subida de portadas
-│   │
-│   ├── Components/                 # UI de Blazor (Razor)
-│   │   ├── App.razor               #   Componente raíz
-│   │   ├── Routes.razor            #   Router
-│   │   ├── _Imports.razor          #   Usings compartidos
-│   │   ├── Layout/                 #   MainLayout, NavMenu, …
-│   │   ├── Pages/                  #   Páginas enrutables
-│   │   ├── Kanban/                 #   Tablero + componentes de columna
-│   │   ├── Books/                  #   Card de libro, formulario, detalles
-│   │   └── Shared/                 #   UI reutilizable (modales, inputs, …)
-│   │
-│   └── wwwroot/                    # Assets estáticos
-│       ├── app.css / app.src.css   # Entrada de Tailwind + salida compilada
-│       ├── favicon.png
-│       ├── images/                 # Imágenes estáticas
-│       ├── js/                     # Scripts de cliente
-│       └── uploads/                # Portadas subidas por el usuario (gitignored)
-│
-├── tests/                          # Proyecto de tests
-│   └── MyBooksKanban.Tests/        # xUnit + bUnit
-│       ├── MyBooksKanban.Tests.csproj
-│       ├── TestDbContextFactory.cs # Factory de SQLite temporal por test
-│       ├── Application/            # BookServiceTests, CategoryServiceTests, …
-│       ├── Domain/                 # BookValidationTests, …
-│       └── Components/             # BookFormTests (bUnit), …
-│
-├── tools/
-│   └── tailwindcss                 # Binario del CLI independiente de Tailwind (requerido para builds locales)
-│
-├── .github/
-│   ├── workflows/                  # Pipelines de CI/CD (ci.yml, docker.yml, deploy.yml)
-│   ├── ISSUE_TEMPLATE/
-│   └── PULL_REQUEST_TEMPLATE.md
-│
-├── .agents/                        # Skills del agente (p. ej. frontend-design)
-├── .agents/skills/
-│
-├── Dockerfile                      # Build multi-etapa, corre en :8080, non-root, healthcheck en /health
-├── compose.yaml                    # Orquestación local con Docker
-├── tailwind.config.js              # Globs de contenido de Tailwind
-├── skills-lock.json                # Skills del agente fijados por versión
-├── AGENTS.md                       # Reglas del proyecto orientadas al agente
-└── README.md
-```
-
-## Notas de arquitectura
-
-- **Capas por carpeta, no por proyecto.** La dirección de dependencias es estricta:
-  `Components → Application → Infrastructure → SQLite`, y `Domain` no depende de nada.
-- **Sin repositorio genérico.** Los servicios reciben `IDbContextFactory<LibraryDbContext>` directamente y construyen las consultas que necesitan.
-- **`KanbanState` es `Scoped`.** Guarda estado de UI transitorio (libro seleccionado, estado de drag, filtros), pero la **base de datos es la fuente de verdad** del tablero.
-- **Los form models están desacoplados de las entidades.** Los componentes se enlazan a `BookFormModel` (y similares) en lugar del grafo de la entidad, para mantener la validación y el binding predecibles.
-- **Migraciones + seeding al arrancar.** `DbSeeder.SeedAsync` invoca `db.Database.MigrateAsync()`, así que un deploy nuevo se auto-inicializa.
-- **Renderizado Interactive Server en toda la app** — sin WebAssembly, sin auto-cambio entre modos.
 
 ## Configuración
 
-| Variable / ajuste | Por defecto | Notas |
-|---|---|---|
-| `ASPNETCORE_ENVIRONMENT` | `Development` (si ASPNETCORE/DOTNET están vacías) | `compose.yaml` y `Dockerfile` fuerzan `Production` |
-| `ConnectionStrings__Default` | `my-books-kanban.dev.db` (dev) / `my-books-kanban.db` (prod) | Ambos archivos están en `.gitignore`. En compose se usa `/data/my-books-kanban.db` |
-| Subida de portadas | `src/wwwroot/uploads/covers/` | En `.gitignore` salvo `.gitkeep` |
-| Puerto HTTP | `5000` (dev) / `8080` (Docker) | |
+| Variable | Descripción | Valor por defecto |
+| --- | --- | --- |
+| `ConnectionStrings__Default` | Cadena de conexión SQLite | `Data Source=my-books-kanban.db` |
+| `ASPNETCORE_ENVIRONMENT` | Entorno; si no se define ninguna variable de entorno, `Program.cs` usa `Development` | `Development` (local) |
+| `DataProtection__KeysPath` | Carpeta donde persistir las claves de Data Protection | — (en Docker: `/data/keys`) |
 
-## Particularidades del toolchain
+Las portadas subidas se guardan en `src/wwwroot/uploads/covers/` (ignorado por git).
 
-- **`tools/tailwindcss`** debe existir para los builds locales. El target MSBuild `CompileTailwind` (en `src/Directory.Build.targets`) lo invoca automáticamente al compilar/publicar.
-- **Warning de NuGet `NU1903`** (vulnerabilidad de SQLitePCLRaw) está suprimido en `src/Directory.Build.props`.
-- **Sin Bootstrap.** Los estilos son **Tailwind** + **CSS Isolation por componente** (archivos `.razor.css`).
-- **Versión de la herramienta de EF:** instalar con `dotnet tool install --global dotnet-ef --version 9.0.4`.
+## Estructura del proyecto
 
-## Testing
+```
+src/
+├── Components/       # UI Blazor (Books, Categories, Kanban, Layout, Pages, Shared)
+├── Application/      # Servicios, validadores, estado de UI, colores (SpinePalette, etc.)
+├── Domain/           # Entidades y enums; no depende de nada
+├── Infrastructure/   # DbContext, configuraciones EF, migraciones, seeding
+└── wwwroot/          # Estáticos; app.src.css es la fuente de Tailwind
+tests/MyBooksKanban.Tests/   # Tests de dominio, servicios y componentes
+deploy/                      # Compose para despliegue
+```
 
-- `TestDbContextFactory.Create()` devuelve una factory respaldada por un **archivo SQLite temporal único por test**, así que los tests están totalmente aislados.
-- Las clases de test implementan `IAsyncLifetime`; `InitializeAsync` llama a `DbSeeder.SeedAsync` para dejar una base conocida.
-- Archivos de test clave:
-  - `tests/MyBooksKanban.Tests/Application/BookServiceTests.cs`
-  - `tests/MyBooksKanban.Tests/Application/CategoryServiceTests.cs`
-  - `tests/MyBooksKanban.Tests/Domain/BookValidationTests.cs`
-  - `tests/MyBooksKanban.Tests/Components/BookFormTests.cs` (bUnit)
+Dependencias entre capas: `Components → Application → Infrastructure → SQLite`. Los servicios reciben `IDbContextFactory<LibraryDbContext>` directamente (sin repositorio genérico).
+
+## Tests
+
+```bash
+dotnet test
+```
+
+Cada test usa su propia base SQLite temporal, así que se pueden ejecutar en paralelo sin tocar tus datos.
+
+## Docker
+
+Construir y ejecutar la imagen localmente:
+
+```bash
+docker build -t my-books-kanban .
+docker run --rm -p 8080:8080 \
+  -e ConnectionStrings__Default="Data Source=/data/my-books-kanban.db" \
+  -v kb-data:/data -v kb-covers:/app/wwwroot/uploads \
+  my-books-kanban
+```
+
+La aplicación queda en <http://localhost:8080>. Los volúmenes `/data` (base de datos y claves) y `/app/wwwroot/uploads` (portadas) deben persistirse.
+
+Para desplegar la imagen publicada en GHCR hay un compose de ejemplo en `deploy/compose.yaml`:
+
+```bash
+docker compose -f deploy/compose.yaml up -d
+```
 
 ## CI/CD
 
-Definido en `.github/workflows/`:
+Los workflows de `.github/workflows/` se ejecutan al subir un tag de versión (`vX.Y.Z` o `X.Y.Z`) o manualmente:
 
-- **`ci.yml`** — push/PR a `main` o `develop` → restore → build `Release` → test → publicar artefacto.
-- **`docker.yml`** — push a `main` → build Docker → smoke test contra `/health` → push de la imagen a GHCR.
-- **`deploy.yml`** — `workflow_dispatch` manual → build → push → deploy por SSH.
+- **ci.yml**: restaura, compila en Release, comprueba que `app.css` está actualizado y ejecuta los tests.
+- **docker.yml**: construye la imagen, hace un smoke test contra `/health` y la publica en GHCR.
+
+> Si cambias estilos, compila antes de hacer commit y sube el `src/wwwroot/app.css` regenerado: CI falla si está desactualizado.
 
 ## Convención de commits
 
-[Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`.
+Se usan [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`.
+
+## Notas para desarrollo
+
+- **ImageSharp**: mantener la versión 3.x; la 4+ requiere licencia de pago.
+- **Color del lomo**: `Book.SpineColor` pertenece al usuario; `null` significa "usar el color de la categoría". `SpinePalette` solo normaliza el color al renderizar, nunca modifica lo guardado.
+- **Estilos**: Tailwind + CSS Isolation por componente. La textura de cuero (`.spine-face`) vive en `app.src.css` para que el formulario y el estante rendericen el mismo objeto.
+- La advertencia NuGet `NU1903` (SQLitePCLRaw) está suprimida en `Directory.Build.props`.
